@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+---
+
+I am building a legal law assistant so I want the website to be professional and classic you should always consider localization especially for Arabic and English: Arabic is the main lang you should always cosider dark and light
+
+
+
+- The modules folder will contains the pages, components & layouts for each module
+- The services will contain each service as 3 files : hook, service, types
+hook File: Contains custom React hooks that encapsulate reusable logic. This might include state management, side effects, asynchronous operations, and interactions with services. Its purpose is to keep component code clean and abstract away complex or repeated logic.
+
+types File: Holds TypeScript definitions such as interfaces, type aliases, and enums. This file provides a structured way to define the shape of data objects, ensuring type safety across your project and making the codebase easier to maintain and scale.
+
+service File: Includes functions or classes responsible for handling external interactions—typically API calls or business logic. It centralizes the logic for data fetching, processing, and error handling, so that components remain decoupled from direct data access and can focus solely on rendering UI.
+
