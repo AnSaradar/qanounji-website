@@ -1,0 +1,149 @@
+{
+  "common": {
+    "appName": "Qanounji",
+    "slogan": "Your Smart Legal Assistant",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "close": "Close"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "features": "Features",
+    "pricing": "Pricing",
+    "contact": "Contact",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "admin": "Admin Panel"
+  },
+  "landing": {
+    "hero": {
+      "title": "Qanounji",
+      "subtitle": "Your AI-Powered Smart Legal Assistant",
+      "description": "Get instant and accurate legal consultations through advanced artificial intelligence technology",
+      "getStarted": "Get Started",
+      "learnMore": "Learn More",
+      "secure": "Secure & Protected",
+      "aiPowered": "AI-Powered",
+      "available247": "Available 24/7"
+    },
+    "features": {
+      "title": "Why Choose Qanounji?",
+      "subtitle": "A comprehensive legal platform combining technology and legal expertise",
+      "aiPowered": {
+        "title": "AI-Powered",
+        "description": "Accurate legal analysis using the latest artificial intelligence technologies"
+      },
+      "multiJurisdiction": {
+        "title": "Multi-Jurisdiction Support",
+        "description": "Support for Syrian and Arab laws with expansion capabilities"
+      },
+      "secure": {
+        "title": "Secure & Confidential",
+        "description": "Complete protection of your data with legal information confidentiality"
+      },
+      "available": {
+        "title": "24/7 Availability",
+        "description": "Continuous service around the clock to answer your legal inquiries"
+      }
+    },
+    "footer": {
+      "rights": "All rights reserved",
+      "disclaimer": "Disclaimer: This platform provides general legal information and does not constitute official legal advice",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "legal": "Legal",
+      "copyright": "© 2025 Qanounji. All rights reserved.",
+      "location": "Syria, Damascus",
+      "madeWith": "Made with ❤️ in Syria"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "subtitle": "Welcome back to Qanounji",
+      "identifier": "Email or Phone Number",
+      "identifierPlaceholder": "Enter your email or phone number",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "submit": "Login",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Register now",
+      "forgotPassword": "Forgot password?"
+    },
+    "register": {
+      "title": "Create New Account",
+      "subtitle": "Join Qanounji and start your legal journey",
+      "displayName": "Full Name",
+      "displayNamePlaceholder": "Enter your full name",
+      "email": "Email",
+      "emailPlaceholder": "example@email.com",
+      "phone": "Phone Number",
+      "phonePlaceholder": "+963xxxxxxxxx",
+      "password": "Password",
+      "passwordPlaceholder": "Strong password (at least 8 characters)",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
+      "preferredLang": "Preferred Language",
+      "submit": "Create Account",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Login",
+      "atLeastOne": "You must enter at least email or phone number"
+    },
+    "validation": {
+      "required": "This field is required",
+      "invalidEmail": "Invalid email address",
+      "invalidPhone": "Invalid phone number",
+      "minLength": "Must be at least {min} characters",
+      "maxLength": "Must not exceed {max} characters",
+      "passwordMismatch": "Passwords do not match",
+      "weakPassword": "Weak password"
+    },
+    "errors": {
+      "loginFailed": "Login failed. Check your credentials",
+      "registerFailed": "Registration failed",
+      "unauthorized": "You are not authorized to access",
+      "networkError": "Connection error. Try again"
+    }
+  },
+  "chat": {
+    "title": "Legal Chat",
+    "placeholder": "Type your legal question here...",
+    "send": "Send",
+    "newChat": "New Chat",
+    "history": "Chat History"
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "users": "Users",
+    "stats": "Statistics",
+    "settings": "Settings",
+    "kb": "Knowledge Base Management"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "profile": "Profile",
+    "security": "Security"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "languages": {
+    "ar": "Arabic",
+    "en": "English"
+  }
+}
+
