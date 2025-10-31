@@ -115,17 +115,24 @@ class AuthService {
   /**
    * Handle API errors and extract meaningful messages
    */
-  private handleError(error: any): Error {
+  private handleError(error: any): Error & { statusCode?: number } {
     if (error.response) {
       // Backend returned an error response
+      const statusCode = error.response.status;
       const message = error.response.data?.message || error.response.data?.error || 'An error occurred';
-      return new Error(message);
+      const err = new Error(message) as Error & { statusCode?: number };
+      err.statusCode = statusCode;
+      return err;
     } else if (error.request) {
       // Request was made but no response received
-      return new Error('Network error. Please check your connection.');
+      const err = new Error('Network error. Please check your connection.') as Error & { statusCode?: number };
+      err.statusCode = undefined;
+      return err;
     } else {
       // Something else happened
-      return new Error(error.message || 'An unexpected error occurred');
+      const err = new Error(error.message || 'An unexpected error occurred') as Error & { statusCode?: number };
+      err.statusCode = undefined;
+      return err;
     }
   }
 }

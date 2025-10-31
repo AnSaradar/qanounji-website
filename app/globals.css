@@ -155,3 +155,274 @@
     linear-gradient(to bottom, currentColor 1px, transparent 1px);
   background-size: 40px 40px;
 }
+
+/* ==================== CHAT ANIMATIONS ==================== */
+
+/* Brain Glow Pulse Animation */
+@keyframes brain-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(59, 130, 246, 0.3),
+      0 0 40px rgba(59, 130, 246, 0.2),
+      0 0 60px rgba(59, 130, 246, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(59, 130, 246, 0.5),
+      0 0 60px rgba(59, 130, 246, 0.3),
+      0 0 90px rgba(59, 130, 246, 0.2);
+    transform: scale(1.05);
+  }
+}
+
+.animate-brain-glow {
+  animation: brain-glow 2s ease-in-out infinite;
+}
+
+/* Typing Cursor Blink */
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.animate-cursor-blink {
+  animation: cursor-blink 1s infinite;
+}
+
+/* Message Slide In */
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* RTL-aware message animations */
+[dir="rtl"] .animate-slide-in-left {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+[dir="rtl"] .animate-slide-in-right {
+  animation: slide-in-left 0.3s ease-out;
+}
+
+/* Sidebar Slide Animations */
+@keyframes sidebar-slide-in-ltr {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes sidebar-slide-in-rtl {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-sidebar-slide-in-ltr {
+  animation: sidebar-slide-in-ltr 0.3s ease-out;
+}
+
+.animate-sidebar-slide-in-rtl {
+  animation: sidebar-slide-in-rtl 0.3s ease-out;
+}
+
+/* Streaming Text Typewriter Effect */
+@keyframes typewriter {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.animate-typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typewriter 2s steps(40, end);
+}
+
+/* Message Bubble Pulse */
+@keyframes message-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.animate-message-pulse {
+  animation: message-pulse 0.6s ease-in-out;
+}
+
+/* Loading Dots Animation */
+@keyframes loading-dots {
+  0%, 20% {
+    color: rgba(0, 0, 0, 0);
+    text-shadow: 
+      0.25em 0 0 rgba(0, 0, 0, 0),
+      0.5em 0 0 rgba(0, 0, 0, 0);
+  }
+  40% {
+    color: currentColor;
+    text-shadow: 
+      0.25em 0 0 rgba(0, 0, 0, 0),
+      0.5em 0 0 rgba(0, 0, 0, 0);
+  }
+  60% {
+    text-shadow: 
+      0.25em 0 0 currentColor,
+      0.5em 0 0 rgba(0, 0, 0, 0);
+  }
+  80%, 100% {
+    text-shadow: 
+      0.25em 0 0 currentColor,
+      0.5em 0 0 currentColor;
+  }
+}
+
+.animate-loading-dots::after {
+  content: '';
+  display: inline-block;
+  animation: loading-dots 1.5s infinite;
+}
+
+/* ==================== RTL SUPPORT ==================== */
+
+/* RTL-specific utilities */
+[dir="rtl"] .rtl\:space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+[dir="rtl"] .rtl\:text-right {
+  text-align: right;
+}
+
+[dir="rtl"] .rtl\:text-left {
+  text-align: left;
+}
+
+/* Message alignment for RTL */
+[dir="rtl"] .chat-message-user {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .chat-message-user .chat-message-content {
+  align-items: flex-start;
+}
+
+/* Sidebar positioning for RTL */
+[dir="rtl"] .chat-sidebar {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .chat-sidebar.collapsed {
+  transform: translateX(100%);
+}
+
+/* Input direction for RTL */
+[dir="rtl"] .chat-input {
+  direction: rtl;
+}
+
+/* ==================== DARK MODE ENHANCEMENTS ==================== */
+
+.dark .animate-brain-glow {
+  animation: brain-glow-dark 2s ease-in-out infinite;
+}
+
+@keyframes brain-glow-dark {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(96, 165, 250, 0.4),
+      0 0 40px rgba(96, 165, 250, 0.3),
+      0 0 60px rgba(96, 165, 250, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(96, 165, 250, 0.6),
+      0 0 60px rgba(96, 165, 250, 0.4),
+      0 0 90px rgba(96, 165, 250, 0.3);
+  }
+}
+
+/* ==================== RESPONSIVE ENHANCEMENTS ==================== */
+
+/* Mobile-specific animations */
+@media (max-width: 768px) {
+  .animate-sidebar-slide-in-ltr,
+  .animate-sidebar-slide-in-rtl {
+    animation-duration: 0.25s;
+  }
+  
+  .animate-slide-in-left,
+  .animate-slide-in-right {
+    animation-duration: 0.2s;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-brain-glow,
+  .animate-cursor-blink,
+  .animate-slide-in-left,
+  .animate-slide-in-right,
+  .animate-sidebar-slide-in-ltr,
+  .animate-sidebar-slide-in-rtl,
+  .animate-typewriter,
+  .animate-message-pulse,
+  .animate-loading-dots {
+    animation: none;
+  }
+}
+
+/* ==================== ACCESSIBILITY ==================== */
+
+/* Focus indicators for keyboard navigation */
+.chat-message:focus,
+.chat-input:focus,
+.chat-sidebar-item:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .animate-brain-glow {
+    animation: none;
+    box-shadow: 0 0 0 2px currentColor;
+  }
+}

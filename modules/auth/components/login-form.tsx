@@ -21,7 +21,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-export function LoginForm() {
+interface LoginFormProps {
+  onError?: (message: string) => void;
+  onRequestStart?: () => void;
+}
+
+export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
   const t = useTranslations('auth.login');
   const tValidation = useTranslations('auth.validation');
   const tErrors = useTranslations('auth.errors');
@@ -30,6 +35,7 @@ export function LoginForm() {
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  // Keep local error only if no external handler is provided
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   // Validation schema
@@ -51,11 +57,21 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setIsLoading(true);
+      // Notify parent to clear any existing banner before new request
+      onRequestStart?.();
       setErrorMessage('');
       await login(data);
       // Redirect happens automatically in auth provider
     } catch (error: any) {
-      setErrorMessage(error.message || tErrors('loginFailed'));
+      // Prefer localized invalid credentials for 401/400 typical auth errors
+      const message = (error?.statusCode === 401 || error?.statusCode === 400)
+        ? tErrors('invalidCredentials')
+        : (error?.message || tErrors('loginFailed'));
+      if (onError) {
+        onError(message);
+      } else {
+        setErrorMessage(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -74,14 +90,7 @@ export function LoginForm() {
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
-          {/* Error Message */}
-          {errorMessage && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <p className="text-sm text-red-800 dark:text-red-200">
-                {errorMessage}
-              </p>
-            </div>
-          )}
+          {/* Field errors are shown below each input. Submit error is handled by parent banner if provided. */}
 
           {/* Identifier Field */}
           <div className="space-y-2">

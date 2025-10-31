@@ -23,7 +23,8 @@
     "register": "Register",
     "logout": "Logout",
     "dashboard": "Dashboard",
-    "admin": "Admin Panel"
+    "admin": "Admin Panel",
+    "settings": "Settings"
   },
   "landing": {
     "hero": {
@@ -110,6 +111,7 @@
     },
     "errors": {
       "loginFailed": "Login failed. Check your credentials",
+      "invalidCredentials": "Email or password is not correct",
       "registerFailed": "Registration failed",
       "unauthorized": "You are not authorized to access",
       "networkError": "Connection error. Try again"
@@ -120,7 +122,105 @@
     "placeholder": "Type your legal question here...",
     "send": "Send",
     "newChat": "New Chat",
-    "history": "Chat History"
+    "history": "Chat History",
+    "sidebar": {
+      "title": "Conversations",
+      "newChat": "New Chat",
+      "empty": "No conversations yet",
+      "emptyDescription": "Start a new conversation to get legal advice",
+      "lastMessage": "Last message",
+      "noMessages": "No messages",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "archive": "Archive"
+      },
+      "accessibility": {
+        "sidebar": "Conversations list",
+        "newChat": "New conversation",
+        "toggle": "Toggle sidebar"
+      }
+    },
+    "messages": {
+      "user": "You",
+      "assistant": "Legal Assistant",
+      "thinking": "Thinking...",
+      "typing": "Typing...",
+      "error": "Failed to send message",
+      "retry": "Retry",
+      "timestamp": "at {time}"
+    },
+    "input": {
+      "placeholder": "Type your message here...",
+      "placeholderEmpty": "Start a new conversation",
+      "send": "Send",
+      "sending": "Sending...",
+      "charCount": "{current}/{max}",
+      "maxLength": "Message character limit",
+      "uploadDisabled": "Document upload coming soon",
+      "tools": {
+        "label": "Tools",
+        "toggle": "Open tools menu",
+        "fullCase": "Full Case Analysis",
+        "officialDocument": "Official Document",
+        "clear": "Remove selected tool"
+      },
+      "shortcuts": {
+        "send": "Press Enter to send",
+        "newLine": "Press Shift+Enter for new line"
+      }
+    },
+    "header": {
+      "title": "New Chat",
+      "lastActive": "Last active",
+      "editTitle": "Edit title",
+      "saveTitle": "Save",
+      "cancelEdit": "Cancel"
+    },
+    "welcome": {
+      "title": "Welcome to Qanounji",
+      "subtitle": "Your Smart Legal Assistant",
+      "description": "Start a new conversation to get instant legal advice",
+      "cta": "Start conversation",
+      "suggestions": {
+        "title": "Suggested topics",
+        "items": [
+          "What are my rights in case of divorce?",
+          "How can I create an employment contract?",
+          "What are the legal procedures to establish a company?",
+          "What is the penalty for theft under Syrian law?"
+        ]
+      },
+      "features": {
+        "title": "Qanounji Features",
+        "items": [
+          "Instant legal consultations",
+          "Legal document analysis",
+          "Updated information on Syrian laws",
+          "Data protection and privacy"
+        ]
+      }
+    },
+    "brain": {
+      "thinking": "Thinking...",
+      "processing": "Processing your request"
+    },
+    "errors": {
+      "sendFailed": "Failed to send message",
+      "loadFailed": "Failed to load conversation",
+      "networkError": "Connection error",
+      "unauthorized": "You are not authorized",
+      "retry": "Retry"
+    },
+    "accessibility": {
+      "sidebar": "Conversations list",
+      "messages": "Messages area",
+      "input": "Message input field",
+      "send": "Send button",
+      "newChat": "New conversation",
+      "deleteChat": "Delete conversation",
+      "editChat": "Edit conversation title"
+    }
   },
   "admin": {
     "title": "Admin Panel",
