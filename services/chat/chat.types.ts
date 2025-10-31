@@ -155,13 +155,20 @@ export interface UseChatMessagesReturn {
   error: string | null;
   sendMessage: (content: string) => Promise<Message>;
   loadMessages: () => Promise<void>;
+  loadMore: () => Promise<void>;
+  hasMore: boolean;
+  appendMessage: (message: Message) => void;
 }
 
 export interface UseStreamingReturn {
   isStreaming: boolean;
   currentMessage: string;
   error: string | null;
-  startStream: (chatId: string, message: string) => void;
+  startStream: (
+    chatId: string,
+    userMessageId: string,
+    options?: { onDone?: (assistant: Message) => void; onError?: (message: string) => void }
+  ) => void;
   stopStream: () => void;
 }
 

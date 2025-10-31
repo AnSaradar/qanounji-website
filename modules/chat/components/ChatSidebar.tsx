@@ -43,6 +43,7 @@ export function ChatSidebar({
     }
   }, [isOpen]);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handleEditChat = (chatId: string, newTitle: string) => {
     onEditChat?.(chatId, newTitle);
@@ -50,9 +51,7 @@ export function ChatSidebar({
   };
 
   const handleDeleteChat = (chatId: string) => {
-    if (confirm(t('actions.delete') + '?')) {
-      onDeleteChat(chatId);
-    }
+    setConfirmDeleteId(chatId);
   };
 
   const open = typeof isOpen === 'boolean' ? isOpen : internalOpen;
@@ -143,6 +142,30 @@ export function ChatSidebar({
           </div>
         </div>
       </div>
+
+      {/* Confirm Delete Modal */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setConfirmDeleteId(null)} />
+          <div className="relative bg-background text-foreground rounded-xl shadow-lg w-[90%] max-w-sm p-5 border">
+            <h3 className="text-base font-semibold mb-2" dir="auto">{t('confirmDelete.title', { default: 'Delete chat?' })}</h3>
+            <p className="text-sm text-muted-foreground mb-4" dir="auto">{t('confirmDelete.message', { default: 'Are you sure you want to delete this chat? This cannot be undone.' })}</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setConfirmDeleteId(null)}>{t('confirmDelete.cancel', { default: 'Cancel' })}</Button>
+              <Button
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={() => {
+                  const id = confirmDeleteId;
+                  setConfirmDeleteId(null);
+                  onDeleteChat(id!);
+                }}
+              >
+                {t('confirmDelete.confirm', { default: 'Delete' })}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

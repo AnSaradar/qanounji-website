@@ -139,6 +139,12 @@
         "sidebar": "Conversations list",
         "newChat": "New conversation",
         "toggle": "Toggle sidebar"
+      },
+      "confirmDelete": {
+        "title": "Delete chat?",
+        "message": "Are you sure you want to delete this chat? This cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Delete"
       }
     },
     "messages": {

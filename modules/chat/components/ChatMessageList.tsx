@@ -2,13 +2,16 @@
 
 import { useEffect, useRef } from 'react';
 import { ChatMessage } from './ChatMessage';
-import { BrainLoadingAnimation } from './BrainLoadingAnimation';
+import { ThinkingBrain } from './ThinkingBrain';
 import type { Message } from '@/services/chat/chat.types';
 
 interface ChatMessageListProps {
   messages: Message[];
   isLoading?: boolean;
   streamingMessage?: string;
+  isThinking?: boolean;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
   className?: string;
 }
 
@@ -16,10 +19,18 @@ export function ChatMessageList({
   messages, 
   isLoading = false, 
   streamingMessage = "",
+  isThinking = false,
+  hasMore = false,
+  onLoadMore,
   className = "" 
 }: ChatMessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[ChatMessageList] Render - messages count:', messages.length, 'isThinking:', isThinking, 'streamingMessage length:', streamingMessage.length);
+  }, [messages, isThinking, streamingMessage]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -40,6 +51,26 @@ export function ChatMessageList({
       });
     }
   }, [streamingMessage]);
+
+  // Infinite scroll: load older messages when reaching top
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !onLoadMore) return;
+
+    const onScroll = () => {
+      if (el.scrollTop <= 48 && hasMore && !isLoading) {
+        const prevHeight = el.scrollHeight;
+        onLoadMore();
+        // After loadMore, restore scroll so content doesn't jump
+        setTimeout(() => {
+          const newHeight = el.scrollHeight;
+          el.scrollTop = newHeight - prevHeight + el.scrollTop;
+        }, 50);
+      }
+    };
+    el.addEventListener('scroll', onScroll);
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [hasMore, isLoading, onLoadMore]);
 
   return (
     <div 
@@ -68,7 +99,7 @@ export function ChatMessageList({
             ))}
 
             {/* Streaming Message */}
-            {streamingMessage && (
+            {(isThinking || streamingMessage) && (
               <div className="flex gap-3 p-4">
                 {/* Assistant Avatar */}
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 flex items-center justify-center">
@@ -81,23 +112,30 @@ export function ChatMessageList({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 text-xs text-gray-500 dark:text-gray-400">
                     <span className="font-medium">Legal Assistant</span>
-                    <span>•</span>
-                    <span>Typing...</span>
+                    {isThinking && <ThinkingBrain size={12} />}
                   </div>
                   
                   <div className="max-w-[80%] lg:max-w-[70%] bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-2xl rounded-bl-md px-4 py-2">
-                    <div className="text-sm leading-relaxed whitespace-pre-wrap" dir="auto">
-                      {streamingMessage}
-                      <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1" />
-                    </div>
+                    {streamingMessage ? (
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap" dir="auto">
+                        {streamingMessage}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground flex items-center gap-2">
+                        <span className="inline-flex h-2 w-2 rounded-full bg-current animate-pulse" />
+                        <span className="animate-pulse">...</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Loading Animation */}
-            {isLoading && !streamingMessage && (
-              <BrainLoadingAnimation />
+            {/* Thin loader row at top for pagination */}
+            {hasMore && (
+              <div className="flex items-center justify-center py-2 text-xs text-muted-foreground">
+                <span>Load previous messages by scrolling up</span>
+              </div>
             )}
 
             {/* Scroll anchor */}

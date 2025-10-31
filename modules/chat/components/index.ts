@@ -13,3 +13,4 @@ export { ChatHeader } from './ChatHeader';
 export { ChatWelcome } from './ChatWelcome';
 export { StreamingMessage } from './StreamingMessage';
 export { ChatTopBar } from './ChatTopBar';
+export { ThinkingBrain } from './ThinkingBrain';

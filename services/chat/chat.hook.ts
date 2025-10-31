@@ -109,10 +109,12 @@ export function useChatMessages(chatId: string | null): UseChatMessagesReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
   const loadMessages = useCallback(async () => {
     if (!chatId) {
       setMessages([]);
+      setHasMore(true);
       return;
     }
 
@@ -120,14 +122,39 @@ export function useChatMessages(chatId: string | null): UseChatMessagesReturn {
     setError(null);
     
     try {
-      const fetchedMessages = await chatService.getMessages(chatId);
+      const fetchedMessages = await chatService.getMessages(chatId, { limit: 20 });
       setMessages(fetchedMessages);
+      setHasMore(fetchedMessages.length === 20);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
   }, [chatId]);
+
+  const loadMore = useCallback(async () => {
+    if (!chatId || !hasMore || messages.length === 0) return;
+    setIsLoading(true);
+    try {
+      const firstId = messages[0]?.id;
+      const older = await chatService.getMessages(chatId, { beforeId: firstId, limit: 20 });
+      setMessages(prev => [...older, ...prev]);
+      setHasMore(older.length === 20);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [chatId, hasMore, messages]);
+
+  const appendMessage = useCallback((message: Message) => {
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === message.id)) {
+        return prev;
+      }
+      return [...prev, message];
+    });
+  }, []);
 
   const sendMessage = useCallback(async (content: string): Promise<Message> => {
     if (!chatId) {
@@ -157,6 +184,9 @@ export function useChatMessages(chatId: string | null): UseChatMessagesReturn {
     error,
     sendMessage,
     loadMessages,
+    loadMore,
+    hasMore,
+    appendMessage,
   };
 }
 
@@ -175,7 +205,11 @@ export function useStreamingResponse(): UseStreamingReturn {
     onComplete: () => void;
   } | null>(null);
 
-  const startStream = useCallback((chatId: string, message: string) => {
+  const startStream = useCallback((
+    chatId: string,
+    userMessageId: string,
+    options?: { onDone?: (assistant: Message) => void; onError?: (message: string) => void },
+  ) => {
     if (isStreaming) {
       console.warn('Stream already in progress');
       return;
@@ -186,43 +220,67 @@ export function useStreamingResponse(): UseStreamingReturn {
     setError(null);
 
     const onToken = (token: string) => {
-      setCurrentMessage(prev => prev + token);
+      console.log('[Hook] onToken called with:', token);
+      setCurrentMessage(prev => {
+        const updated = prev + token;
+        console.log('[Hook] currentMessage updated to:', updated);
+        return updated;
+      });
     };
 
-    const onError = (errorMessage: string) => {
+    const handleError = (errorMessage: string) => {
       setError(errorMessage);
       setIsStreaming(false);
       setCurrentMessage('');
+      if (options?.onError) {
+        options.onError(errorMessage);
+      }
     };
 
     const onComplete = () => {
       setIsStreaming(false);
-      setCurrentMessage('');
     };
 
     // Store stream reference for cleanup
     streamRef.current = {
       chatId,
       onToken,
-      onError,
+      onError: handleError,
       onComplete,
     };
 
-    // Start the stream
-    chatService.startStreamingResponse(chatId, message, onToken, onError, onComplete);
+    // Start the stream (SSE)
+    console.log('[Hook] Starting stream for chat:', chatId, 'message:', userMessageId);
+    chatService
+      .startStreamingResponse(chatId, {
+        userMessageId,
+        onToken,
+        onDone: (assistant) => {
+          console.log('[Hook] onDone called with assistant:', assistant);
+          if (options?.onDone) {
+            options.onDone(assistant);
+          }
+        },
+        onError: handleError,
+        onComplete: () => {
+          console.log('[Hook] onComplete called');
+          onComplete();
+        },
+      })
+      .catch((err) => {
+        const message = err?.message || 'Streaming failed';
+        console.error('[Hook] Stream error:', err);
+        handleError(message);
+      });
   }, [isStreaming]);
 
   const stopStream = useCallback(() => {
-    if (!isStreaming) {
-      return;
-    }
-
     chatService.stopStreamingResponse();
     setIsStreaming(false);
-    setCurrentMessage('');
+    // Do not clear currentMessage here; let the caller control when it disappears
     setError(null);
     streamRef.current = null;
-  }, [isStreaming]);
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -239,6 +297,27 @@ export function useStreamingResponse(): UseStreamingReturn {
     error,
     startStream,
     stopStream,
+  };
+}
+
+// Convenience alias for components expecting non-streaming naming
+export function useStreamingAssistant() {
+  const streaming = useStreamingResponse();
+
+  const sendMessageWithAI = useCallback((
+    chatId: string,
+    userMessageId: string,
+    options?: { onDone?: (assistant: Message) => void; onError?: (message: string) => void },
+  ) => {
+    streaming.startStream(chatId, userMessageId, options);
+  }, [streaming]);
+
+  return {
+    isThinking: streaming.isStreaming,
+    streamingMessage: streaming.currentMessage,
+    error: streaming.error,
+    sendMessageWithAI,
+    stop: streaming.stopStream,
   };
 }
 

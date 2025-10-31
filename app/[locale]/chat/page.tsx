@@ -4,17 +4,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { ProtectedRoute } from '@/components/guards/protected-route';
 import { useAuth } from '@/services/auth';
-import { useChats, useChatMessages, useActiveChat, useStreamingResponse, useChatHistory } from '@/services/chat/chat.hook';
+import { useChats, useChatMessages, useActiveChat, useChatHistory, useStreamingAssistant } from '@/services/chat/chat.hook';
 import {
   ChatSidebar,
   ChatHeader,
   ChatMessageList,
   ChatInput,
   ChatWelcome,
-    BrainLoadingAnimation,
-    ChatTopBar,
+  ChatTopBar,
 } from '@/modules/chat/components';
-import type { CreateChatDto, Chat } from '@/services/chat/chat.types';
+import chatService from '@/services/chat/chat.service';
+import type { CreateChatDto, Chat, Message } from '@/services/chat/chat.types';
 
 function ChatInterface() {
   const t = useTranslations('chat');
@@ -24,12 +24,11 @@ function ChatInterface() {
   // Chat state management
   const { chats, createChat, updateChat, deleteChat, isLoading: chatsLoading } = useChats();
   const { activeChatId, activeChat, setActiveChatById, clearActiveChat } = useActiveChat();
-  const { messages, sendMessage, isLoading: messagesLoading } = useChatMessages(activeChatId);
-  const { isStreaming, currentMessage, startStream, stopStream } = useStreamingResponse();
+  const { messages, sendMessage, isLoading: messagesLoading, loadMore, hasMore, loadMessages, appendMessage } = useChatMessages(activeChatId);
+  const { isThinking, streamingMessage, sendMessageWithAI, stop } = useStreamingAssistant();
   const { addToHistory, removeFromHistory } = useChatHistory();
 
   // UI state
-  const [isWaitingResponse, setIsWaitingResponse] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +51,7 @@ function ChatInterface() {
       addToHistory(chats[0].id);
     }
   }, [chats, activeChatId, setActiveChatById, addToHistory]);
+
 
   // Handle new chat creation
   const handleNewChat = useCallback(async (): Promise<Chat> => {
@@ -115,31 +115,51 @@ function ChatInterface() {
 
   // Handle message sending
   const handleSendMessage = useCallback(async (content: string) => {
-    if (!activeChatId) {
-      // Create new chat if none exists
-      await handleNewChat();
-      // continue to send below
-    }
-
     try {
       setError(null);
-      setIsWaitingResponse(true);
 
-      // Send user message
-      await sendMessage(content);
+      let targetChatId = activeChatId;
+      if (!targetChatId) {
+        const newChat = await handleNewChat();
+        targetChatId = newChat.id;
+      }
 
-      // For now, simulate AI response (backbone implementation)
-      // In the future, this will trigger the actual AI streaming
-      setTimeout(() => {
-        startStream(activeChatId, content);
-        setIsWaitingResponse(false);
-      }, 1000);
+      if (!targetChatId) {
+        throw new Error('Unable to determine chat');
+      }
 
+      let userMessage: Message;
+
+      if (targetChatId === activeChatId) {
+        userMessage = await sendMessage(content);
+      } else {
+        userMessage = await chatService.sendMessage(targetChatId, content);
+        await loadMessages();
+      }
+
+      console.log('[ChatPage] Sending message with AI, targetChat:', targetChatId, 'userMessage:', userMessage.id);
+      sendMessageWithAI(targetChatId, userMessage.id, {
+        onDone: async (assistant) => {
+          console.log('[ChatPage] onDone callback, assistant:', assistant);
+          if (assistant) {
+            console.log('[ChatPage] Appending assistant message');
+            appendMessage(assistant);
+            // allow React to render the final message before clearing the stream bubble
+            setTimeout(() => {
+              console.log('[ChatPage] Calling stop() to clear streaming state');
+              stop();
+            }, 0);
+          }
+        },
+        onError: (message) => {
+          console.error('[ChatPage] Streaming error:', message);
+          setError(message);
+        },
+      });
     } catch (err: any) {
-      setError(err.message);
-      setIsWaitingResponse(false);
+      setError(err.message ?? 'Failed to send message');
     }
-  }, [activeChatId, sendMessage, handleNewChat, startStream]);
+  }, [activeChatId, handleNewChat, sendMessage, sendMessageWithAI, loadMessages]);
 
   // Send a starter suggestion: ensure chat exists, then send content
   const handleSendSuggestion = useCallback(async (content: string) => {
@@ -205,7 +225,7 @@ function ChatInterface() {
                 <div className="w-full max-w-3xl mx-auto px-6 pb-10">
                   <ChatInput
                     onSend={handleSendMessage}
-                    disabled={isWaitingResponse || isStreaming}
+                    disabled={isThinking}
                     placeholder={t('input.placeholder')}
                     className="border-none bg-transparent p-0"
                   />
@@ -218,15 +238,13 @@ function ChatInterface() {
               <ChatMessageList
                 messages={messages}
                 isLoading={messagesLoading}
-                streamingMessage={isStreaming ? currentMessage : undefined}
+                streamingMessage={isThinking ? streamingMessage : ''}
+                isThinking={isThinking}
+                hasMore={hasMore}
+                onLoadMore={loadMore}
               />
 
-              {/* Brain Animation (when waiting for response) */}
-              {isWaitingResponse && !isStreaming && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
-                  <BrainLoadingAnimation />
-                </div>
-              )}
+              {/* No overlay brain; indicator is inline now */}
             </>
           )}
         </div>
@@ -235,7 +253,7 @@ function ChatInterface() {
         {!showWelcome && activeChat && (
           <ChatInput
             onSend={handleSendMessage}
-            disabled={isWaitingResponse || isStreaming}
+            disabled={isThinking}
             placeholder={t('input.placeholder')}
           />
         )}

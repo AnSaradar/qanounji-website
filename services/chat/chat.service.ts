@@ -3,7 +3,7 @@
  * Handles all chat-related API calls to the NestJS backend
  */
 
-import apiClient from '../api/client';
+import apiClient, { tokenManager } from '../api/client';
 import type {
   Chat,
   Message,
@@ -118,9 +118,14 @@ class ChatService {
    * Get all messages in a chat
    * GET /api/chats/:chatId/messages
    */
-  async getMessages(chatId: string): Promise<Message[]> {
+  async getMessages(chatId: string, options?: { beforeId?: string; limit?: number }): Promise<Message[]> {
     try {
-      const response = await apiClient.get<MessageResponse[]>(`${this.baseUrl}/${chatId}/messages`);
+      const params = new URLSearchParams();
+      if (options?.beforeId) params.append('beforeId', options.beforeId);
+      if (options?.limit) params.append('limit', String(options.limit));
+      const qs = params.toString();
+      const url = qs ? `${this.baseUrl}/${chatId}/messages?${qs}` : `${this.baseUrl}/${chatId}/messages`;
+      const response = await apiClient.get<MessageResponse[]>(url);
       return response.data.map(message => this.mapMessageResponse(message));
     } catch (error: any) {
       throw this.handleError(error);
@@ -133,27 +138,119 @@ class ChatService {
    */
   async startStreamingResponse(
     chatId: string,
-    message: string,
-    onToken: (token: string) => void,
-    onError: (error: string) => void,
-    onComplete: () => void
+    params: {
+      userMessageId: string;
+      onToken: (token: string) => void;
+      onDone?: (assistant: Message) => void;
+      onError: (error: string) => void;
+      onComplete: () => void;
+    }
   ): Promise<void> {
+    // Establish SSE using fetch + ReadableStream so we can send Authorization headers
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+    const controller = new AbortController();
+    (this as any)._streamController = controller; // store for stopStreamingResponse
+
     try {
-      // Placeholder implementation
-      // In the future, this will establish an SSE connection
-      console.log('Streaming not yet implemented', { chatId, message });
-      
-      // Simulate a delayed response for now
-      setTimeout(() => {
-        const mockResponse = "This is a placeholder response. The streaming feature will be implemented when the backend supports SSE.";
-        mockResponse.split('').forEach((char, index) => {
-          setTimeout(() => onToken(char), index * 50);
-        });
-        setTimeout(onComplete, mockResponse.length * 50 + 1000);
-      }, 1000);
-      
+      const accessToken = tokenManager.getAccessToken();
+      const url = `${API_BASE_URL}${this.baseUrl}/${encodeURIComponent(chatId)}/messages/stream?${new URLSearchParams({ userMessageId: params.userMessageId })}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/event-stream',
+          ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+        },
+        credentials: 'include',
+        signal: controller.signal,
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error(`Stream failed with status ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      const processChunk = (chunk: string) => {
+        buffer += chunk;
+        let delimiterIndex = -1;
+        let delimiterLength = 0;
+
+        const findDelimiter = () => {
+          const idxUnix = buffer.indexOf('\n\n');
+          if (idxUnix !== -1) {
+            delimiterIndex = idxUnix;
+            delimiterLength = 2;
+            return true;
+          }
+          const idxWin = buffer.indexOf('\r\n\r\n');
+          if (idxWin !== -1) {
+            delimiterIndex = idxWin;
+            delimiterLength = 4;
+            return true;
+          }
+          return false;
+        };
+
+        while (findDelimiter()) {
+          const eventBlock = buffer.slice(0, delimiterIndex);
+          buffer = buffer.slice(delimiterIndex + delimiterLength);
+          const lines = eventBlock.split(/\r?\n/);
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('data:')) {
+              const dataStr = trimmed.slice(5).trim();
+              try {
+                const parsed = JSON.parse(dataStr);
+                console.log('[ChatService] SSE event received:', parsed);
+                
+                // NestJS wraps SSE data in a 'data' property, unwrap it
+                const evt = parsed.data || parsed;
+                console.log('[ChatService] Unwrapped event:', evt);
+                
+                if (evt?.type === 'token' && typeof evt.chunk === 'string') {
+                  console.log('[ChatService] Token chunk:', evt.chunk);
+                  params.onToken(evt.chunk);
+                } else if (evt?.type === 'done' && evt.assistantMessage) {
+                  console.log('[ChatService] Done event with assistant message:', evt.assistantMessage);
+                  if (params.onDone) {
+                    params.onDone(this.mapMessageResponse(evt.assistantMessage));
+                  }
+                } else if (evt?.type === 'error') {
+                  console.log('[ChatService] Error event:', evt.message);
+                  params.onError(evt.message || 'Streaming error');
+                } else {
+                  console.warn('[ChatService] Unknown event type:', evt);
+                }
+              } catch (parseError) {
+                // Fallback: treat as raw token
+                console.log('[ChatService] Failed to parse SSE data, treating as raw token:', dataStr, parseError);
+                if (dataStr) params.onToken(dataStr);
+              }
+            }
+          }
+        }
+      };
+
+      // Read loop
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        const text = decoder.decode(value, { stream: true });
+        processChunk(text);
+      }
+
+      params.onComplete();
     } catch (error: any) {
-      onError(error.message);
+      if (error?.name === 'AbortError') {
+        // silently ignore
+        return;
+      }
+      params.onError(error?.message || 'Streaming failed');
     }
   }
 
@@ -161,8 +258,11 @@ class ChatService {
    * Stop streaming response
    */
   async stopStreamingResponse(): Promise<void> {
-    // Placeholder - will close SSE connection in future
-    console.log('Stopping stream...');
+    const controller = (this as any)._streamController as AbortController | undefined;
+    if (controller) {
+      controller.abort();
+      (this as any)._streamController = undefined;
+    }
   }
 
   // ==================== MAPPING METHODS ====================
