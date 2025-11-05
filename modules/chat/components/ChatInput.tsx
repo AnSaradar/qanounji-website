@@ -3,26 +3,9 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ComponentType } from 'react';
 import { useTranslations } from 'next-intl';
-import {
-  Send,
-  Loader2,
-  Paperclip,
-  Sparkles,
-  Scale,
-  FileText,
-  XCircle,
-  Check,
-} from 'lucide-react';
+import { Send, Loader2, Paperclip, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-
-type ToolOption = 'fullCase' | 'officialDocument';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -30,7 +13,7 @@ interface ChatInputProps {
   placeholder?: string;
   maxLength?: number;
   className?: string;
-  onToolChange?: (tool: ToolOption | null) => void;
+  caseAnalysisActive?: boolean;
 }
 
 export function ChatInput({
@@ -39,33 +22,12 @@ export function ChatInput({
   placeholder,
   maxLength = 2000,
   className = '',
-  onToolChange,
+  caseAnalysisActive = false,
 }: ChatInputProps) {
   const t = useTranslations('chat.input');
-  const tTools = useTranslations('chat.input.tools');
   const [message, setMessage] = useState('');
   const [isComposing, setIsComposing] = useState(false);
-  const [activeTool, setActiveTool] = useState<ToolOption | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const toolOptions: Array<{
-    id: ToolOption;
-    label: string;
-    icon: ComponentType<{ className?: string }>;
-  }> = [
-    { id: 'fullCase', label: tTools('fullCase'), icon: Scale },
-    { id: 'officialDocument', label: tTools('officialDocument'), icon: FileText },
-  ];
-
-  const activeToolConfig = activeTool
-    ? toolOptions.find((option) => option.id === activeTool)
-    : undefined;
-
-  useEffect(() => {
-    if (onToolChange) {
-      onToolChange(activeTool);
-    }
-  }, [activeTool, onToolChange]);
 
   const handleSend = () => {
     const trimmedMessage = message.trim();
@@ -92,12 +54,6 @@ export function ChatInput({
   const handleCompositionEnd = () => {
     setIsComposing(false);
   };
-
-  const handleToolSelect = (tool: ToolOption) => {
-    setActiveTool((prev) => (prev === tool ? null : tool));
-  };
-
-  const clearActiveTool = () => setActiveTool(null);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -159,52 +115,15 @@ export function ChatInput({
             )}
           </div>
 
-          {activeToolConfig && (
-            <Button
-              type="button"
-              onClick={clearActiveTool}
-              size="icon"
-              title={activeToolConfig.label}
-              aria-label={activeToolConfig.label}
-              className={cn(
-                'h-10 w-10 rounded-full',
-                activeTool === 'fullCase' && 'bg-blue-500 text-white hover:bg-blue-600',
-                activeTool === 'officialDocument' && 'bg-emerald-500 text-white hover:bg-emerald-600'
-              )}
+          {caseAnalysisActive && (
+            <div
+              aria-label="case-analysis-active"
+              title={t('tools.fullCase')}
+              className="h-10 w-10 rounded-full bg-blue-500 text-white flex items-center justify-center"
             >
-              <activeToolConfig.icon className="h-5 w-5" />
-            </Button>
+              <Brain className="h-5 w-5" />
+            </div>
           )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full text-muted-foreground"
-                aria-label={tTools('toggle')}
-                title={tTools('toggle')}
-              >
-                <Sparkles className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[14rem]">
-              {toolOptions.map((option) => (
-                <DropdownMenuItem
-                  key={option.id}
-                  onSelect={() => handleToolSelect(option.id)}
-                  className="flex items-center justify-between gap-3"
-                >
-                  <div className="flex items-center gap-3 text-sm" dir="auto">
-                    <option.icon className="h-4 w-4 text-muted-foreground" />
-                    <span>{option.label}</span>
-                  </div>
-                  {activeTool === option.id && <Check className="h-4 w-4" />}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
 
           <Button
             type="button"

@@ -15,6 +15,7 @@ import type {
   ChatResponse,
   MessageResponse,
   ChatWithMessagesResponse,
+  StartCaseAnalysisResponse,
   ApiError,
 } from './chat.types';
 
@@ -100,15 +101,49 @@ class ChatService {
   /**
    * Send a message in a chat
    * POST /api/chats/:chatId/messages
+   * Returns either a single Message (regular mode) or both user and assistant messages (case analysis mode)
    */
-  async sendMessage(chatId: string, content: string): Promise<Message> {
+  async sendMessage(
+    chatId: string,
+    content: string
+  ): Promise<Message | { userMessage: Message; assistantMessage: Message }> {
     try {
       const createMessageDto: CreateMessageDto = { content };
-      const response = await apiClient.post<MessageResponse>(
+      const response = await apiClient.post<MessageResponse | { userMessage: MessageResponse; assistantMessage: MessageResponse }>(
         `${this.baseUrl}/${chatId}/messages`,
         createMessageDto
       );
-      return this.mapMessageResponse(response.data);
+      
+      // Check if response has assistantMessage (case analysis mode)
+      if (response.data && 'assistantMessage' in response.data) {
+        return {
+          userMessage: this.mapMessageResponse(response.data.userMessage),
+          assistantMessage: this.mapMessageResponse(response.data.assistantMessage),
+        };
+      }
+      
+      // Regular mode - single message
+      return this.mapMessageResponse(response.data as MessageResponse);
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async startCaseAnalysis(chatId: string): Promise<{ assistantMessage: Message | null; status: string }> {
+    try {
+      const response = await apiClient.post<StartCaseAnalysisResponse>(
+        `${this.baseUrl}/${chatId}/mode/case-analysis`,
+        {},
+      );
+
+      const assistantMessage = response.data.assistantMessage
+        ? this.mapMessageResponse(response.data.assistantMessage)
+        : null;
+
+      return {
+        assistantMessage,
+        status: response.data.status,
+      };
     } catch (error: any) {
       throw this.handleError(error);
     }
@@ -279,6 +314,7 @@ class ChatService {
       createdAt: response.createdAt,
       updatedAt: response.updatedAt,
       archivedAt: response.archivedAt,
+      mode: response.mode,
     };
   }
 
@@ -312,7 +348,8 @@ class ChatService {
       updatedAt: response.updatedAt,
       archivedAt: response.archivedAt,
       messages: response.messages.map(message => this.mapMessageResponse(message)),
-    };
+      mode: (response as any).mode,
+    } as any;
   }
 
   // ==================== UTILITY METHODS ====================

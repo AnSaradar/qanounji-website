@@ -15,6 +15,7 @@ export default function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
   const accessToken = req.cookies.get('accessToken')?.value;
+  const refreshToken = req.cookies.get('refreshToken')?.value;
 
   // Determine locale from path: "/{locale}/..."; fallback to default
   const pathSegments = pathname.split('/').filter(Boolean);
@@ -22,8 +23,9 @@ export default function middleware(req: NextRequest) {
     ? pathSegments[0]
     : defaultLocale;
 
-  // If user is authenticated, redirect away from landing and auth pages to chat
-  if (accessToken) {
+  // If tokens exist, redirect away from landing and auth pages to chat
+  // Note: This does not validate token; actual auth is enforced client-side by ProtectedRoute
+  if (accessToken && refreshToken) {
     const isRoot = pathname === '/' || pathname === '';
     const isLocaleRoot = pathSegments.length === 1 && locales.includes(pathSegments[0] as any);
     const isAuthPage = pathSegments.length >= 2 && locales.includes(pathSegments[0] as any) && pathSegments[1] === 'auth';

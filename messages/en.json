@@ -197,6 +197,10 @@
           "What is the penalty for theft under Syrian law?"
         ]
       },
+      "caseAnalysis": {
+        "cta": "Start Case Analysis Mode",
+        "description": "Launch a guided Syrian-law case assessment with structured questions."
+      },
       "features": {
         "title": "Qanounji Features",
         "items": [

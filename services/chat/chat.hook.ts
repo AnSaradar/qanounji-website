@@ -32,8 +32,10 @@ export function useChats(initialQuery: QueryChatsDto = {}): UseChatsReturn {
     setError(null);
     
     try {
+      console.debug('[useChats] loadChats called with query:', query || initialQuery);
       const queryToUse = query || initialQuery;
       const fetchedChats = await chatService.getUserChats(queryToUse);
+      console.debug('[useChats] loadChats fetched chats count:', fetchedChats.length);
       setChats(fetchedChats);
     } catch (err: any) {
       setError(err.message);
@@ -46,7 +48,9 @@ export function useChats(initialQuery: QueryChatsDto = {}): UseChatsReturn {
     setError(null);
     
     try {
+      console.debug('[useChats] createChat with data:', data);
       const newChat = await chatService.createChat(data);
+      console.debug('[useChats] createChat created id:', newChat.id);
       setChats(prev => [newChat, ...prev]);
       return newChat;
     } catch (err: any) {
@@ -132,6 +136,21 @@ export function useChatMessages(chatId: string | null): UseChatMessagesReturn {
     }
   }, [chatId]);
 
+  const loadMessagesFor = useCallback(async (targetChatId: string) => {
+    try {
+      const fetchedMessages = await chatService.getMessages(targetChatId, { limit: 20 });
+      // Only update state if this hook instance is for the same chat
+      if (chatId === targetChatId) {
+        setMessages(fetchedMessages);
+        setHasMore(fetchedMessages.length === 20);
+      }
+      return fetchedMessages;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
+  }, [chatId]);
+
   const loadMore = useCallback(async () => {
     if (!chatId || !hasMore || messages.length === 0) return;
     setIsLoading(true);
@@ -156,7 +175,46 @@ export function useChatMessages(chatId: string | null): UseChatMessagesReturn {
     });
   }, []);
 
-  const sendMessage = useCallback(async (content: string): Promise<Message> => {
+  const startCaseAnalysis = useCallback(async (): Promise<Message | null> => {
+    if (!chatId) {
+      throw new Error('No active chat selected');
+    }
+
+    setError(null);
+
+    try {
+      const { assistantMessage } = await chatService.startCaseAnalysis(chatId);
+      if (assistantMessage) {
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
+      return assistantMessage;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
+  }, [chatId]);
+
+  // Start case analysis for an explicit chat id to avoid race with state updates
+  const startCaseAnalysisFor = useCallback(async (targetChatId: string): Promise<Message | null> => {
+    if (!targetChatId) {
+      throw new Error('No active chat selected');
+    }
+
+    setError(null);
+
+    try {
+      const { assistantMessage } = await chatService.startCaseAnalysis(targetChatId);
+      if (assistantMessage && chatId === targetChatId) {
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
+      return assistantMessage ?? null;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
+  }, [chatId]);
+
+  const sendMessage = useCallback(async (content: string): Promise<Message | { userMessage: Message; assistantMessage: Message }> => {
     if (!chatId) {
       throw new Error('No active chat selected');
     }
@@ -164,14 +222,30 @@ export function useChatMessages(chatId: string | null): UseChatMessagesReturn {
     setError(null);
     
     try {
-      const newMessage = await chatService.sendMessage(chatId, content);
-      setMessages(prev => [...prev, newMessage]);
-      return newMessage;
+      const messageResult = await chatService.sendMessage(chatId, content);
+      
+      // Check if response has assistantMessage (case analysis mode)
+      if (messageResult && 'assistantMessage' in messageResult) {
+        // Case analysis mode - add both messages
+        setMessages(prev => [...prev, messageResult.userMessage, messageResult.assistantMessage]);
+        return messageResult;
+      }
+      
+      // Regular mode - single message
+      const userMessage = messageResult as Message;
+      setMessages(prev => [...prev, userMessage]);
+      
+      // Reload messages to get assistant response (for regular mode)
+      setTimeout(async () => {
+        await loadMessages();
+      }, 300);
+      
+      return userMessage;
     } catch (err: any) {
       setError(err.message);
       throw err;
     }
-  }, [chatId]);
+  }, [chatId, loadMessages]);
 
   // Load messages when chatId changes
   useEffect(() => {
@@ -184,9 +258,13 @@ export function useChatMessages(chatId: string | null): UseChatMessagesReturn {
     error,
     sendMessage,
     loadMessages,
+    // Expose a precise loader to avoid race conditions right after creation
+    loadMore,
     loadMore,
     hasMore,
     appendMessage,
+    startCaseAnalysis,
+    startCaseAnalysisFor,
   };
 }
 
@@ -331,9 +409,11 @@ export function useActiveChat() {
   const [error, setError] = useState<string | null>(null);
 
   const setActiveChatById = useCallback(async (chatId: string | null) => {
+    console.debug('[useActiveChat] setActiveChatById called with:', chatId);
     setActiveChatId(chatId);
     
     if (!chatId) {
+      console.debug('[useActiveChat] clearing active chat');
       setActiveChat(null);
       return;
     }
@@ -342,7 +422,9 @@ export function useActiveChat() {
     setError(null);
 
     try {
+      console.debug('[useActiveChat] fetching chat by id:', chatId);
       const chat = await chatService.getChatById(chatId);
+      console.debug('[useActiveChat] fetched chat, messages:', chat.messages?.length ?? 0);
       setActiveChat(chat);
     } catch (err: any) {
       setError(err.message);

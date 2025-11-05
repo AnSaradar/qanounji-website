@@ -5,10 +5,12 @@ import { MessageSquare, Brain } from 'lucide-react';
 
 interface ChatWelcomeProps {
   onSendSuggestion?: (suggestion: string) => void;
+  onStartCaseAnalysis?: () => void;
+  onStartNormalChat?: () => void;
   className?: string;
 }
 
-export function ChatWelcome({ onSendSuggestion, className = "" }: ChatWelcomeProps) {
+export function ChatWelcome({ onSendSuggestion, onStartCaseAnalysis, onStartNormalChat, className = "" }: ChatWelcomeProps) {
   const t = useTranslations('chat.welcome');
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -56,6 +58,46 @@ export function ChatWelcome({ onSendSuggestion, className = "" }: ChatWelcomePro
             ))}
           </div>
         </div>
+
+        {(onStartCaseAnalysis || onStartNormalChat) && (
+          <div className="mt-10 flex flex-col items-center gap-3">
+            <div className="flex items-center gap-3">
+              {onStartCaseAnalysis && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log('[ChatWelcome] Start Case Analysis button clicked');
+                    onStartCaseAnalysis();
+                  }}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Brain className="w-5 h-5" />
+                  {t('caseAnalysis.cta')}
+                </button>
+              )}
+              {onStartNormalChat && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log('[ChatWelcome] Start Normal Chat button clicked');
+                    onStartNormalChat();
+                  }}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-border hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  {t('normal.cta')}
+                </button>
+              )}
+            </div>
+            {onStartCaseAnalysis && (
+              <p className="mt-1 text-sm text-muted-foreground" dir="auto">
+                {t('caseAnalysis.description')}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* No CTA button as requested */}
       </div>

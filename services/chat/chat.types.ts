@@ -15,6 +15,7 @@ export interface Chat {
   createdAt: string;
   updatedAt: string;
   archivedAt?: string;
+  mode?: 'normal' | 'case_analysis';
 }
 
 export interface Message {
@@ -38,6 +39,7 @@ export interface ChatWithMessages extends Chat {
 export interface CreateChatDto {
   lang?: Locale;
   title?: string;
+  mode?: 'normal' | 'case_analysis';
 }
 
 export interface UpdateChatDto {
@@ -105,6 +107,7 @@ export interface ChatResponse {
   createdAt: string;
   updatedAt: string;
   archivedAt?: string;
+  mode?: 'normal' | 'case_analysis';
 }
 
 export interface MessageResponse {
@@ -121,6 +124,11 @@ export interface MessageResponse {
 
 export interface ChatWithMessagesResponse extends ChatResponse {
   messages: MessageResponse[];
+}
+
+export interface StartCaseAnalysisResponse {
+  assistantMessage?: MessageResponse;
+  status: string;
 }
 
 // ==================== ERROR TYPES ====================
@@ -158,6 +166,8 @@ export interface UseChatMessagesReturn {
   loadMore: () => Promise<void>;
   hasMore: boolean;
   appendMessage: (message: Message) => void;
+  startCaseAnalysis: () => Promise<Message | null>;
+  startCaseAnalysisFor: (chatId: string) => Promise<Message | null>;
 }
 
 export interface UseStreamingReturn {
