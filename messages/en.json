@@ -199,7 +199,12 @@
       },
       "caseAnalysis": {
         "cta": "Start Case Analysis Mode",
-        "description": "Launch a guided Syrian-law case assessment with structured questions."
+        "description": "Launch a guided Syrian-law case assessment with structured questions.",
+        "starterMessage": "Welcome to Case Analysis Mode! This is a specialized mode where I'll guide you through a structured legal case assessment. I'll ask you questions to gather all the necessary facts about your case, then provide a comprehensive analysis including potential charges, legal outcomes, and recommendations based on Syrian law. Please describe your legal case briefly to get started."
+      },
+      "normal": {
+        "cta": "Start Normal Chat",
+        "starterMessage": "Welcome to Qanounji! I'm your legal assistant, here to help you with legal questions and consultations. Feel free to ask me anything related to Syrian law, legal procedures, contracts, or any other legal matters. How can I assist you today?"
       },
       "features": {
         "title": "Qanounji Features",

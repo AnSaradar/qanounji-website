@@ -14,3 +14,4 @@ export { ChatWelcome } from './ChatWelcome';
 export { StreamingMessage } from './StreamingMessage';
 export { ChatTopBar } from './ChatTopBar';
 export { ThinkingBrain } from './ThinkingBrain';
+export { GlowingMind } from './GlowingMind';

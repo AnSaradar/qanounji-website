@@ -150,6 +150,23 @@ class ChatService {
   }
 
   /**
+   * Create a starter assistant message (for onboarding)
+   * POST /api/chats/:chatId/messages/starter
+   */
+  async createStarterMessage(chatId: string, content: string): Promise<Message> {
+    try {
+      const createMessageDto: CreateMessageDto = { content };
+      const response = await apiClient.post<MessageResponse>(
+        `${this.baseUrl}/${chatId}/messages/starter`,
+        createMessageDto
+      );
+      return this.mapMessageResponse(response.data);
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  /**
    * Get all messages in a chat
    * GET /api/chats/:chatId/messages
    */

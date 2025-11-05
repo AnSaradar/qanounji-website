@@ -133,13 +133,6 @@ export function ChatSidebar({
               </div>
             )}
           </div>
-
-          {/* Footer */}
-          <div className="p-4 border-t border-sidebar-border dark:border-sidebar-border">
-            <div className="text-xs text-sidebar-foreground/50 text-center">
-              {chats.length} {chats.length === 1 ? 'conversation' : 'conversations'}
-            </div>
-          </div>
         </div>
       </div>
 

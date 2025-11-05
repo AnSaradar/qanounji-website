@@ -180,6 +180,69 @@
   animation: brain-glow 2s ease-in-out infinite;
 }
 
+/* Glowing Mind Pulse Animation */
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-glow-pulse-delayed {
+  animation: glow-pulse 2s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+/* Text Glow Animation */
+@keyframes text-glow {
+  0%, 100% {
+    opacity: 0.8;
+    text-shadow: 
+      0 0 10px rgba(59, 130, 246, 0.3),
+      0 0 20px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 
+      0 0 15px rgba(59, 130, 246, 0.5),
+      0 0 30px rgba(59, 130, 246, 0.3),
+      0 0 45px rgba(59, 130, 246, 0.2);
+  }
+}
+
+.animate-text-glow {
+  animation: text-glow 2s ease-in-out infinite;
+}
+
+/* Dark mode text glow */
+.dark .animate-text-glow {
+  animation: text-glow-dark 2s ease-in-out infinite;
+}
+
+@keyframes text-glow-dark {
+  0%, 100% {
+    opacity: 0.9;
+    text-shadow: 
+      0 0 10px rgba(96, 165, 250, 0.4),
+      0 0 20px rgba(96, 165, 250, 0.3);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 
+      0 0 15px rgba(96, 165, 250, 0.6),
+      0 0 30px rgba(96, 165, 250, 0.4),
+      0 0 45px rgba(96, 165, 250, 0.3);
+  }
+}
+
 /* Typing Cursor Blink */
 @keyframes cursor-blink {
   0%, 50% { opacity: 1; }
