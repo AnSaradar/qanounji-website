@@ -17,6 +17,8 @@ import type {
   ChatWithMessagesResponse,
   StartCaseAnalysisResponse,
   ApiError,
+  SendMessageResult,
+  CaseAnalysisMessageResult,
 } from './chat.types';
 
 /**
@@ -106,7 +108,7 @@ class ChatService {
   async sendMessage(
     chatId: string,
     content: string
-  ): Promise<Message | { userMessage: Message; assistantMessage: Message }> {
+  ): Promise<SendMessageResult> {
     try {
       const createMessageDto: CreateMessageDto = { content };
       const response = await apiClient.post<MessageResponse | { userMessage: MessageResponse; assistantMessage: MessageResponse }>(
@@ -116,10 +118,11 @@ class ChatService {
       
       // Check if response has assistantMessage (case analysis mode)
       if (response.data && 'assistantMessage' in response.data) {
-        return {
+        const caseAnalysisResult: CaseAnalysisMessageResult = {
           userMessage: this.mapMessageResponse(response.data.userMessage),
           assistantMessage: this.mapMessageResponse(response.data.assistantMessage),
         };
+        return caseAnalysisResult;
       }
       
       // Regular mode - single message

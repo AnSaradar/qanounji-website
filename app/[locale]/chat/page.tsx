@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { ProtectedRoute } from '@/components/guards/protected-route';
-import { useAuth } from '@/services/auth';
 import { useChats, useChatMessages, useActiveChat, useChatHistory, useStreamingAssistant } from '@/services/chat/chat.hook';
 import {
   ChatSidebar,
@@ -14,7 +13,7 @@ import {
   ChatTopBar,
 } from '@/modules/chat/components';
 import chatService from '@/services/chat/chat.service';
-import type { CreateChatDto, Message } from '@/services/chat/chat.types';
+import type { CreateChatDto, Message, SendMessageResult } from '@/services/chat/chat.types';
 
 function ChatInterface() {
   const t = useTranslations('chat');
@@ -23,7 +22,7 @@ function ChatInterface() {
   // Chat state management
   const { chats, createChat, updateChat, deleteChat } = useChats();
   const { activeChatId, activeChat, setActiveChatById, clearActiveChat } = useActiveChat();
-  const { messages, sendMessage, isLoading: messagesLoading, loadMore, hasMore, loadMessages, appendMessage, startCaseAnalysis, startCaseAnalysisFor } = useChatMessages(activeChatId);
+  const { messages, sendMessage, isLoading: messagesLoading, loadMore, hasMore, loadMessages, appendMessage, startCaseAnalysisFor } = useChatMessages(activeChatId);
   // Active chat id ref to avoid stale closures in async flows
   const activeChatIdRef = useRef<string | null>(activeChatId);
   useEffect(() => { activeChatIdRef.current = activeChatId; }, [activeChatId]);
@@ -166,7 +165,7 @@ function ChatInterface() {
         throw new Error('Unable to determine chat');
       }
 
-      let messageResult: Message | { userMessage: Message; assistantMessage: Message };
+      let messageResult: SendMessageResult;
 
       if (targetChatId === activeChatId) {
         messageResult = await sendMessage(content);
@@ -376,7 +375,7 @@ function ChatInterface() {
       return [synthetic];
     }
     return messages;
-  }, [messages, activeChat, activeChatId, locale, t]);
+  }, [messages, activeChat, activeChatId, t]);
 
   return (
     <div className="flex h-screen bg-background" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
