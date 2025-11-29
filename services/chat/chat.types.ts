@@ -30,6 +30,13 @@ export interface Message {
   createdAt: string;
 }
 
+export interface CaseAnalysisMessageResult {
+  userMessage: Message;
+  assistantMessage: Message;
+}
+
+export type SendMessageResult = Message | CaseAnalysisMessageResult;
+
 export interface ChatWithMessages extends Chat {
   messages: Message[];
 }
@@ -161,7 +168,7 @@ export interface UseChatMessagesReturn {
   messages: Message[];
   isLoading: boolean;
   error: string | null;
-  sendMessage: (content: string) => Promise<Message>;
+  sendMessage: (content: string) => Promise<SendMessageResult>;
   loadMessages: () => Promise<void>;
   loadMore: () => Promise<void>;
   hasMore: boolean;

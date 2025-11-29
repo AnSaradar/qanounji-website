@@ -10,12 +10,16 @@ export const defaultLocale: Locale = 'ar';
 
 export default getRequestConfig(async ({ locale }) => {
   // Validate that the incoming `locale` parameter is valid
-  if (!locales.includes(locale as Locale)) {
+  if (!locale || !locales.includes(locale as Locale)) {
     notFound();
   }
 
+  // At this point, TypeScript knows locale is defined, but we need to assert it's a string
+  const validLocale = locale as Locale;
+
   return {
-    messages: (await import(`../messages/${locale}.json`)).default,
+    locale: validLocale,
+    messages: (await import(`../messages/${validLocale}.json`)).default,
   };
 });
 

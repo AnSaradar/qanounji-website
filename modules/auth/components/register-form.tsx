@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/services/auth';
+import { useAuth, LanguageEnum, RegisterDto } from '@/services/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +26,7 @@ export function RegisterForm() {
   const tValidation = useTranslations('auth.validation');
   const tErrors = useTranslations('auth.errors');
   const params = useParams();
-  const locale = params.locale as string;
+  const localeParam = params.locale as string;
   const { register: registerUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -74,12 +74,15 @@ export function RegisterForm() {
       setErrorMessage('');
       
       // Prepare data for backend
-      const registerData = {
+      const preferredLang =
+        localeParam === LanguageEnum.AR ? LanguageEnum.AR : LanguageEnum.EN;
+
+      const registerData: RegisterDto = {
         displayName: data.displayName,
         email: data.email || undefined,
         phone: data.phone || undefined,
         password: data.password,
-        preferredLang: locale as 'ar' | 'en',
+        preferredLang,
       };
 
       await registerUser(registerData);
@@ -257,7 +260,7 @@ export function RegisterForm() {
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">
             {t('haveAccount')}{' '}
             <Link
-              href={`/${locale}/auth/login`}
+              href={`/${localeParam}/auth/login`}
               className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
             >
               {t('loginLink')}

@@ -17,6 +17,7 @@ import type {
   UseChatMessagesReturn,
   UseStreamingReturn,
   StreamingEvent,
+  SendMessageResult,
 } from './chat.types';
 
 /**
@@ -214,7 +215,7 @@ export function useChatMessages(chatId: string | null): UseChatMessagesReturn {
     }
   }, [chatId]);
 
-  const sendMessage = useCallback(async (content: string): Promise<Message | { userMessage: Message; assistantMessage: Message }> => {
+  const sendMessage = useCallback(async (content: string): Promise<SendMessageResult> => {
     if (!chatId) {
       throw new Error('No active chat selected');
     }
@@ -259,7 +260,6 @@ export function useChatMessages(chatId: string | null): UseChatMessagesReturn {
     sendMessage,
     loadMessages,
     // Expose a precise loader to avoid race conditions right after creation
-    loadMore,
     loadMore,
     hasMore,
     appendMessage,
