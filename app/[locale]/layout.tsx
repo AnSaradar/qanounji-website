@@ -25,7 +25,7 @@ export default async function LocaleLayout({
   // Using Next.js [locale] segment with next-intl plugin handles locale detection
 
   // Ensure that the incoming `locale` is valid
-  if (!locales.includes(locale as any)) {
+  if (!locales.includes(locale as (typeof locales)[number])) {
     notFound();
   }
 

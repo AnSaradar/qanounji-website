@@ -14,15 +14,14 @@ import {
   ChatTopBar,
 } from '@/modules/chat/components';
 import chatService from '@/services/chat/chat.service';
-import type { CreateChatDto, Chat, Message } from '@/services/chat/chat.types';
+import type { CreateChatDto, Message } from '@/services/chat/chat.types';
 
 function ChatInterface() {
   const t = useTranslations('chat');
   const locale = useLocale();
-  const { user } = useAuth();
   
   // Chat state management
-  const { chats, createChat, updateChat, deleteChat, isLoading: chatsLoading } = useChats();
+  const { chats, createChat, updateChat, deleteChat } = useChats();
   const { activeChatId, activeChat, setActiveChatById, clearActiveChat } = useActiveChat();
   const { messages, sendMessage, isLoading: messagesLoading, loadMore, hasMore, loadMessages, appendMessage, startCaseAnalysis, startCaseAnalysisFor } = useChatMessages(activeChatId);
   // Active chat id ref to avoid stale closures in async flows
@@ -36,7 +35,6 @@ function ChatInterface() {
   const [error, setError] = useState<string | null>(null);
   type ViewState = 'idle' | 'creatingChat' | 'selectingChat' | 'startingAnalysis' | 'welcomeForEmptyChat' | 'chatReady';
   const [viewState, setViewState] = useState<ViewState>('idle');
-  const [pendingChatId, setPendingChatId] = useState<string | null>(null);
   
   // Ref to track if we're programmatically creating/setting a chat (prevents auto-initialization interference)
   const isProgrammaticallySettingChat = useRef(false);
@@ -80,7 +78,6 @@ function ChatInterface() {
     setViewState('welcomeForEmptyChat');
     isProgrammaticallySettingChat.current = false;
     hasInitialized.current = true;
-    setPendingChatId(null);
     clearActiveChat();
     closeSidebarOnMobile();
   }, [clearActiveChat, closeSidebarOnMobile]);
@@ -88,7 +85,6 @@ function ChatInterface() {
   // Handle chat selection
   const handleSelectChat = useCallback((chatId: string) => {
     setViewState('selectingChat');
-    setPendingChatId(chatId);
     setActiveChatById(chatId);
     addToHistory(chatId);
     closeSidebarOnMobile();
@@ -115,8 +111,9 @@ function ChatInterface() {
           setViewState('welcomeForEmptyChat');
         }
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete chat';
+      setError(errorMessage);
     }
   }, [deleteChat, removeFromHistory, activeChatId, chats, setActiveChatById, clearActiveChat]);
 
@@ -124,8 +121,9 @@ function ChatInterface() {
   const handleEditChat = useCallback(async (chatId: string, newTitle: string) => {
     try {
       await updateChat(chatId, { title: newTitle });
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update chat';
+      setError(errorMessage);
     }
   }, [updateChat]);
 
@@ -144,7 +142,6 @@ function ChatInterface() {
           title: t('header.title'),
         };
         const newChat = await createChat({ ...createData, mode: 'normal' });
-        setPendingChatId(newChat.id);
         await setActiveChatById(newChat.id);
         addToHistory(newChat.id);
         isProgrammaticallySettingChat.current = false;
@@ -159,7 +156,7 @@ function ChatInterface() {
           const starterMessage = t('welcome.normal.starterMessage');
           await chatService.createStarterMessage(targetChatId, starterMessage);
           console.log('[ChatPage] Normal chat starter message saved on first send');
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error('[ChatPage] Failed to save normal chat starter message:', err);
           // Don't fail the whole flow if starter message save fails
         }
@@ -210,8 +207,9 @@ function ChatInterface() {
           setError(message);
         },
       });
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to send message');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
+      setError(errorMessage);
     }
   }, [activeChatId, sendMessage, sendMessageWithAI, loadMessages, appendMessage, stop, createChat, locale, t, setActiveChatById, addToHistory]);
 
@@ -226,15 +224,15 @@ function ChatInterface() {
           title: t('header.title'),
         };
         const newChat = await createChat({ ...createData, mode: 'normal' });
-        setPendingChatId(newChat.id);
         await setActiveChatById(newChat.id);
         addToHistory(newChat.id);
         isProgrammaticallySettingChat.current = false;
         setViewState('chatReady');
       }
       await handleSendMessage(content);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send suggestion';
+      setError(errorMessage);
     }
   }, [activeChatId, handleSendMessage, createChat, locale, t, setActiveChatById, addToHistory]);
 
@@ -250,7 +248,6 @@ function ChatInterface() {
       };
       const newChat = await createChat({ ...createData, mode: 'normal' });
       const targetChatId = newChat.id;
-      setPendingChatId(targetChatId);
       await setActiveChatById(targetChatId);
       addToHistory(targetChatId);
       
@@ -261,16 +258,17 @@ function ChatInterface() {
         console.log('[ChatPage] Normal chat starter message saved');
         // Reload messages to show the saved starter message
         await loadMessages();
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('[ChatPage] Failed to save normal chat starter message:', err);
         // Don't fail the whole flow if starter message save fails
       }
       
       isProgrammaticallySettingChat.current = false;
       setViewState('chatReady');
-    } catch (err: any) {
+    } catch (err: unknown) {
       isProgrammaticallySettingChat.current = false;
-      setError(err.message);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start normal chat';
+      setError(errorMessage);
       setViewState('idle');
     }
   }, [createChat, locale, t, setActiveChatById, addToHistory, loadMessages]);
@@ -289,7 +287,6 @@ function ChatInterface() {
       };
       const newChat = await createChat({ ...createData, mode: 'case_analysis' });
       const targetChatId = newChat.id;
-      setPendingChatId(targetChatId);
       await setActiveChatById(targetChatId);
       addToHistory(targetChatId);
 
@@ -302,7 +299,7 @@ function ChatInterface() {
         }
         return false;
       };
-      const isActiveReady = await waitForActive();
+      await waitForActive();
 
       // Always call the explicit variant to avoid race with hook's chatId closure
       const assistantMsg = await startCaseAnalysisFor(targetChatId);
@@ -315,7 +312,7 @@ function ChatInterface() {
         console.log('[ChatPage] Starter message saved:', savedStarter);
         // Reload messages to show the saved starter message
         await loadMessages();
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('[ChatPage] Failed to save starter message:', err);
         // Don't fail the whole flow if starter message save fails
       }
@@ -323,14 +320,22 @@ function ChatInterface() {
       // Reset the flag after everything is complete
       isProgrammaticallySettingChat.current = false;
       setViewState('chatReady');
-    } catch (err: any) {
+    } catch (err: unknown) {
       isProgrammaticallySettingChat.current = false; // Reset on error
       console.error('[ChatPage] Failed to start case analysis:', err);
-      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to start case analysis';
+      let errorMessage = 'Failed to start case analysis';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null && 'response' in err) {
+        const response = (err as { response?: { data?: { message?: string } } }).response;
+        if (response?.data?.message) {
+          errorMessage = response.data.message;
+        }
+      }
       setError(errorMessage);
       setViewState('idle');
     }
-  }, [activeChatId, startCaseAnalysis, startCaseAnalysisFor, loadMessages, appendMessage, setActiveChatById, addToHistory, closeSidebarOnMobile, createChat, locale, t]);
+  }, [startCaseAnalysisFor, loadMessages, setActiveChatById, addToHistory, createChat, locale, t]);
 
   // Clear error on user action
   const clearError = useCallback(() => {
@@ -342,7 +347,6 @@ function ChatInterface() {
   // Always show welcome if no active chat is selected, or if explicitly set to welcome state
   const showWelcome = viewState === 'welcomeForEmptyChat' || !activeChatId;
   const showLoader = viewState === 'creatingChat' || viewState === 'selectingChat' || viewState === 'startingAnalysis';
-  const caseAnalysisActive = viewState === 'startingAnalysis' || false; // becomes true right after starting analysis
 
   // Compute display messages: inject a synthetic localized welcome for empty chats (case-analysis or normal)
   const displayMessages = useMemo(() => {
@@ -372,7 +376,7 @@ function ChatInterface() {
       return [synthetic];
     }
     return messages;
-  }, [messages, activeChat?.mode, activeChatId, locale, t]);
+  }, [messages, activeChat, activeChatId, locale, t]);
 
   return (
     <div className="flex h-screen bg-background" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
