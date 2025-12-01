@@ -11,6 +11,8 @@ A modern Next.js application built with the latest stable technologies.
 - **ShadCN UI** - Re-usable components built with Radix UI and Tailwind
 - **Lucide React** - Beautiful & consistent icon set
 
+
+
 ## 📦 Installation
 
 Dependencies are already installed. If you need to reinstall:
