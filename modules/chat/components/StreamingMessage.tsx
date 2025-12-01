@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Bot, Loader2 } from 'lucide-react';
@@ -8,6 +9,47 @@ interface StreamingMessageProps {
   content: string;
   isComplete?: boolean;
   className?: string;
+}
+
+// Helper function to format streaming AI response as layout text
+function formatStreamingLayoutText(content: string, showCursor: boolean, isComplete: boolean): React.ReactNode {
+  if (!content) {
+    return showCursor && !isComplete ? (
+      <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1" />
+    ) : null;
+  }
+  
+  // For streaming, format progressively - split by double newlines for paragraphs
+  const paragraphs = content.split(/\n\n+/);
+  
+  return (
+    <div className="space-y-3">
+      {paragraphs.map((paragraph, index) => {
+        const isLastParagraph = index === paragraphs.length - 1;
+        // Split by single newlines within paragraph for line breaks
+        const lines = paragraph.split('\n');
+        
+        return (
+          <p key={index} className="leading-7">
+            {lines.map((line, lineIndex) => {
+              const isLastLine = lineIndex === lines.length - 1;
+              const isLastItem = isLastParagraph && isLastLine;
+              
+              return (
+                <React.Fragment key={lineIndex}>
+                  {line}
+                  {lineIndex < lines.length - 1 && <br />}
+                  {isLastItem && showCursor && !isComplete && (
+                    <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1" />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </p>
+        );
+      })}
+    </div>
+  );
 }
 
 export function StreamingMessage({ 
@@ -83,11 +125,8 @@ export function StreamingMessage({
 
         {/* Message Bubble */}
         <div className="max-w-[80%] lg:max-w-[70%] bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-2xl rounded-bl-md px-4 py-2">
-          <div className="text-sm leading-relaxed whitespace-pre-wrap" dir="auto">
-            {displayedContent}
-            {showCursor && !isComplete && (
-              <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1" />
-            )}
+          <div className="text-sm leading-relaxed" dir="auto">
+            {formatStreamingLayoutText(displayedContent, showCursor, isComplete)}
           </div>
 
           {/* Streaming indicator */}

@@ -88,7 +88,14 @@ export function RegisterForm() {
       await registerUser(registerData);
       // Redirect happens automatically in auth provider
     } catch (error: any) {
-      setErrorMessage(error.message || tErrors('registerFailed'));
+      const statusCode = error?.statusCode || error?.response?.status;
+      if (statusCode === 409) {
+        setErrorMessage(tErrors('accountExists'));
+      } else if (statusCode === 400) {
+        setErrorMessage(tErrors('invalidData'));
+      } else {
+        setErrorMessage(tErrors('registerFailed'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -126,6 +133,7 @@ export function RegisterForm() {
               {...register('displayName')}
               disabled={isLoading}
               className={errors.displayName ? 'border-red-500' : ''}
+              dir="ltr"
             />
             {errors.displayName && (
               <p className="text-sm text-red-600 dark:text-red-400">
@@ -144,6 +152,7 @@ export function RegisterForm() {
               {...register('email')}
               disabled={isLoading}
               className={errors.email ? 'border-red-500' : ''}
+              dir="ltr"
             />
             {errors.email && (
               <p className="text-sm text-red-600 dark:text-red-400">
@@ -162,6 +171,7 @@ export function RegisterForm() {
               {...register('phone')}
               disabled={isLoading}
               className={errors.phone ? 'border-red-500' : ''}
+              dir="ltr"
             />
             {errors.phone && (
               <p className="text-sm text-red-600 dark:text-red-400">
@@ -183,7 +193,8 @@ export function RegisterForm() {
                 placeholder={t('passwordPlaceholder')}
                 {...register('password')}
                 disabled={isLoading}
-                className={errors.password ? 'border-red-500' : ''}
+                className={`${errors.password ? 'border-red-500' : ''} pr-10`}
+                dir="ltr"
               />
               <button
                 type="button"
@@ -215,7 +226,8 @@ export function RegisterForm() {
                 placeholder={t('confirmPasswordPlaceholder')}
                 {...register('confirmPassword')}
                 disabled={isLoading}
-                className={errors.confirmPassword ? 'border-red-500' : ''}
+                className={`${errors.confirmPassword ? 'border-red-500' : ''} pr-10`}
+                dir="ltr"
               />
               <button
                 type="button"

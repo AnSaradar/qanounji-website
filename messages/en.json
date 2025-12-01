@@ -3,7 +3,7 @@
     "appName": "Qanounji",
     "slogan": "Your Smart Legal Assistant",
     "loading": "Loading...",
-    "error": "An error occurred",
+    "error": "An unexpected error occurred. Please try again",
     "success": "Success",
     "cancel": "Cancel",
     "confirm": "Confirm",
@@ -101,20 +101,22 @@
       "atLeastOne": "You must enter at least email or phone number"
     },
     "validation": {
-      "required": "This field is required",
-      "invalidEmail": "Invalid email address",
-      "invalidPhone": "Invalid phone number",
-      "minLength": "Must be at least {min} characters",
+      "required": "Please fill in this field",
+      "invalidEmail": "Please enter a valid email address",
+      "invalidPhone": "Please enter a valid phone number",
+      "minLength": "Must contain at least {min} characters",
       "maxLength": "Must not exceed {max} characters",
-      "passwordMismatch": "Passwords do not match",
-      "weakPassword": "Weak password"
+      "passwordMismatch": "The passwords you entered do not match",
+      "weakPassword": "Password is too weak. Please choose a stronger password"
     },
     "errors": {
-      "loginFailed": "Login failed. Check your credentials",
-      "invalidCredentials": "Email or password is not correct",
-      "registerFailed": "Registration failed",
-      "unauthorized": "You are not authorized to access",
-      "networkError": "Connection error. Try again"
+      "loginFailed": "Unable to sign in. Please verify your credentials and try again",
+      "invalidCredentials": "The email or password you entered is incorrect. Please try again",
+      "registerFailed": "Unable to create your account. Please try again later",
+      "accountExists": "An account with this email or phone number already exists. Please sign in instead",
+      "invalidData": "The information you entered is invalid. Please check your details and try again",
+      "unauthorized": "Sorry, you do not have permission to access this page",
+      "networkError": "A connection error occurred. Please check your internet connection and try again"
     }
   },
   "chat": {
@@ -152,7 +154,7 @@
       "assistant": "Legal Assistant",
       "thinking": "Thinking...",
       "typing": "Typing...",
-      "error": "Failed to send message",
+      "error": "Unable to send message. Please try again",
       "retry": "Retry",
       "timestamp": "at {time}"
     },
@@ -221,11 +223,11 @@
       "processing": "Processing your request"
     },
     "errors": {
-      "sendFailed": "Failed to send message",
-      "loadFailed": "Failed to load conversation",
-      "networkError": "Connection error",
-      "unauthorized": "You are not authorized",
-      "retry": "Retry"
+      "sendFailed": "Unable to send message. Please try again",
+      "loadFailed": "Unable to load conversation. Please refresh the page",
+      "networkError": "A connection error occurred. Please check your internet connection",
+      "unauthorized": "Sorry, you do not have permission to access this",
+      "retry": "Try Again"
     },
     "accessibility": {
       "sidebar": "Conversations list",
