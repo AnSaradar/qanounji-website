@@ -63,10 +63,17 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
       await login(data);
       // Redirect happens automatically in auth provider
     } catch (error: any) {
-      // Prefer localized invalid credentials for 401/400 typical auth errors
-      const message = (error?.statusCode === 401 || error?.statusCode === 400)
-        ? tErrors('invalidCredentials')
-        : (error?.message || tErrors('loginFailed'));
+      const statusCode = error?.statusCode || error?.response?.status;
+      let message: string;
+      if (statusCode === 401 || statusCode === 400) {
+        message = tErrors('invalidCredentials');
+      } else if (statusCode === 403) {
+        message = tErrors('unauthorized');
+      } else if (!navigator.onLine || error?.code === 'NETWORK_ERROR') {
+        message = tErrors('networkError');
+      } else {
+        message = tErrors('loginFailed');
+      }
       if (onError) {
         onError(message);
       } else {
@@ -102,6 +109,7 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
               {...register('identifier')}
               disabled={isLoading}
               className={errors.identifier ? 'border-red-500' : ''}
+              dir="ltr"
             />
             {errors.identifier && (
               <p className="text-sm text-red-600 dark:text-red-400">
@@ -120,7 +128,8 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
                 placeholder={t('passwordPlaceholder')}
                 {...register('password')}
                 disabled={isLoading}
-                className={errors.password ? 'border-red-500' : ''}
+                className={`${errors.password ? 'border-red-500' : ''} pr-10`}
+                dir="ltr"
               />
               <button
                 type="button"
@@ -143,7 +152,7 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
           </div>
 
           {/* Forgot Password Link */}
-          <div className="flex justify-end">
+          <div className={`flex justify-end ${locale === 'ar' ? 'text-right' : ''}`}>
             <Link
               href={`/${locale}/auth/forgot-password`}
               className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
@@ -157,7 +166,7 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full"
+            className="w-full mt-4"
             size="lg"
             disabled={isLoading}
           >

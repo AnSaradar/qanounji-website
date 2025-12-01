@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { User, Bot, Clock } from 'lucide-react';
 import type { Message } from '@/services/chat/chat.types';
@@ -8,6 +9,36 @@ import { useChatUtils } from '@/services/chat/chat.hook';
 interface ChatMessageProps {
   message: Message;
   className?: string;
+}
+
+// Helper function to format AI response as layout text
+function formatLayoutText(content: string): React.ReactNode {
+  if (!content) return null;
+  
+  // Split by double newlines for paragraphs, single newlines for line breaks
+  const paragraphs = content.split(/\n\n+/).filter(p => p.trim());
+  
+  if (paragraphs.length === 0) return null;
+  
+  return (
+    <div className="space-y-3">
+      {paragraphs.map((paragraph, index) => {
+        // Split by single newlines within paragraph for line breaks
+        const lines = paragraph.split('\n').filter(l => l.trim());
+        
+        return (
+          <p key={index} className="leading-7">
+            {lines.map((line, lineIndex) => (
+              <span key={lineIndex}>
+                {line.trim()}
+                {lineIndex < lines.length - 1 && <br />}
+              </span>
+            ))}
+          </p>
+        );
+      })}
+    </div>
+  );
 }
 
 export function ChatMessage({ message, className = "" }: ChatMessageProps) {
@@ -81,12 +112,21 @@ export function ChatMessage({ message, className = "" }: ChatMessageProps) {
           }
         `}>
           {/* Message Text */}
-          <div 
-            className="text-sm leading-relaxed whitespace-pre-wrap"
-            dir="auto"
-          >
-            {message.content}
-          </div>
+          {isAssistant ? (
+            <div 
+              className="text-sm leading-relaxed"
+              dir="auto"
+            >
+              {formatLayoutText(message.content)}
+            </div>
+          ) : (
+            <div 
+              className="text-sm leading-relaxed whitespace-pre-wrap"
+              dir="auto"
+            >
+              {message.content}
+            </div>
+          )}
 
           {/* Tool Information */}
           {message.toolName && (
