@@ -1,5 +1,6 @@
 # Qanounji Website
 
+
 A modern Next.js application built with the latest stable technologies.
 
 ## 🚀 Tech Stack
