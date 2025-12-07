@@ -33,10 +33,16 @@ class ChatService {
    * POST /api/chats
    */
   async createChat(data: CreateChatDto): Promise<Chat> {
+    const startTime = performance.now();
     try {
+      console.log('[ChatService] ⏱️ createChat START', { data, timestamp: new Date().toISOString() });
       const response = await apiClient.post<ChatResponse>(this.baseUrl, data);
+      const duration = performance.now() - startTime;
+      console.log(`[ChatService] ⏱️ createChat END - Duration: ${duration.toFixed(2)}ms`, { chatId: response.data.id });
       return this.mapChatResponse(response.data);
     } catch (error: any) {
+      const duration = performance.now() - startTime;
+      console.error(`[ChatService] ⏱️ createChat ERROR - Duration: ${duration.toFixed(2)}ms`, error);
       throw this.handleError(error);
     }
   }
@@ -67,10 +73,19 @@ class ChatService {
    * GET /api/chats/:id
    */
   async getChatById(id: string): Promise<ChatWithMessages> {
+    const startTime = performance.now();
     try {
+      console.log('[ChatService] ⏱️ getChatById START', { chatId: id, timestamp: new Date().toISOString() });
       const response = await apiClient.get<ChatWithMessagesResponse>(`${this.baseUrl}/${id}`);
+      const duration = performance.now() - startTime;
+      console.log(`[ChatService] ⏱️ getChatById END - Duration: ${duration.toFixed(2)}ms`, { 
+        chatId: id, 
+        messagesCount: response.data.messages?.length ?? 0 
+      });
       return this.mapChatWithMessagesResponse(response.data);
     } catch (error: any) {
+      const duration = performance.now() - startTime;
+      console.error(`[ChatService] ⏱️ getChatById ERROR - Duration: ${duration.toFixed(2)}ms`, { chatId: id, error });
       throw this.handleError(error);
     }
   }
@@ -157,14 +172,23 @@ class ChatService {
    * POST /api/chats/:chatId/messages/starter
    */
   async createStarterMessage(chatId: string, content: string): Promise<Message> {
+    const startTime = performance.now();
     try {
+      console.log('[ChatService] ⏱️ createStarterMessage START', { chatId, timestamp: new Date().toISOString() });
       const createMessageDto: CreateMessageDto = { content };
       const response = await apiClient.post<MessageResponse>(
         `${this.baseUrl}/${chatId}/messages/starter`,
         createMessageDto
       );
+      const duration = performance.now() - startTime;
+      console.log(`[ChatService] ⏱️ createStarterMessage END - Duration: ${duration.toFixed(2)}ms`, { 
+        chatId, 
+        messageId: response.data.id 
+      });
       return this.mapMessageResponse(response.data);
     } catch (error: any) {
+      const duration = performance.now() - startTime;
+      console.error(`[ChatService] ⏱️ createStarterMessage ERROR - Duration: ${duration.toFixed(2)}ms`, { chatId, error });
       throw this.handleError(error);
     }
   }
@@ -174,15 +198,24 @@ class ChatService {
    * GET /api/chats/:chatId/messages
    */
   async getMessages(chatId: string, options?: { beforeId?: string; limit?: number }): Promise<Message[]> {
+    const startTime = performance.now();
     try {
+      console.log('[ChatService] ⏱️ getMessages START', { chatId, options, timestamp: new Date().toISOString() });
       const params = new URLSearchParams();
       if (options?.beforeId) params.append('beforeId', options.beforeId);
       if (options?.limit) params.append('limit', String(options.limit));
       const qs = params.toString();
       const url = qs ? `${this.baseUrl}/${chatId}/messages?${qs}` : `${this.baseUrl}/${chatId}/messages`;
       const response = await apiClient.get<MessageResponse[]>(url);
+      const duration = performance.now() - startTime;
+      console.log(`[ChatService] ⏱️ getMessages END - Duration: ${duration.toFixed(2)}ms`, { 
+        chatId, 
+        messagesCount: response.data.length 
+      });
       return response.data.map(message => this.mapMessageResponse(message));
     } catch (error: any) {
+      const duration = performance.now() - startTime;
+      console.error(`[ChatService] ⏱️ getMessages ERROR - Duration: ${duration.toFixed(2)}ms`, { chatId, error });
       throw this.handleError(error);
     }
   }

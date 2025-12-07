@@ -237,34 +237,64 @@ function ChatInterface() {
 
   // Start a normal chat explicitly (from the welcome page CTA)
   const handleStartNormalChat = useCallback(async () => {
+    const totalStartTime = performance.now();
     try {
+      console.log('[ChatPage] ⏱️ handleStartNormalChat START', { timestamp: new Date().toISOString() });
       setError(null);
       setViewState('creatingChat');
       isProgrammaticallySettingChat.current = true;
+      
       const createData: CreateChatDto = {
         lang: locale as 'ar' | 'en',
         title: t('header.title'),
       };
+      
+      // Step 1: Create chat
+      const step1Start = performance.now();
       const newChat = await createChat({ ...createData, mode: 'normal' });
+      const step1Duration = performance.now() - step1Start;
+      console.log(`[ChatPage] ⏱️ Step 1 - createChat completed: ${step1Duration.toFixed(2)}ms`);
+      
       const targetChatId = newChat.id;
+      
+      // Step 2: Set active chat
+      const step2Start = performance.now();
       await setActiveChatById(targetChatId);
+      const step2Duration = performance.now() - step2Start;
+      console.log(`[ChatPage] ⏱️ Step 2 - setActiveChatById completed: ${step2Duration.toFixed(2)}ms`);
+      
       addToHistory(targetChatId);
       
-      // Create and save the starter message from frontend
+      // Step 3: Create starter message
+      const step3Start = performance.now();
+      let step3Duration = 0;
+      let step4Duration = 0;
       try {
         const starterMessage = t('welcome.normal.starterMessage');
         await chatService.createStarterMessage(targetChatId, starterMessage);
-        console.log('[ChatPage] Normal chat starter message saved');
-        // Reload messages to show the saved starter message
+        step3Duration = performance.now() - step3Start;
+        console.log(`[ChatPage] ⏱️ Step 3 - createStarterMessage completed: ${step3Duration.toFixed(2)}ms`);
+        
+        // Step 4: Load messages
+        const step4Start = performance.now();
         await loadMessages();
+        step4Duration = performance.now() - step4Start;
+        console.log(`[ChatPage] ⏱️ Step 4 - loadMessages completed: ${step4Duration.toFixed(2)}ms`);
       } catch (err: unknown) {
+        step3Duration = performance.now() - step3Start;
         console.error('[ChatPage] Failed to save normal chat starter message:', err);
         // Don't fail the whole flow if starter message save fails
       }
       
+      const totalDuration = performance.now() - totalStartTime;
+      console.log(`[ChatPage] ⏱️ handleStartNormalChat END - Total Duration: ${totalDuration.toFixed(2)}ms`);
+      console.log(`[ChatPage] ⏱️ Breakdown: createChat=${step1Duration.toFixed(2)}ms, setActiveChat=${step2Duration.toFixed(2)}ms, starterMessage=${step3Duration.toFixed(2)}ms, loadMessages=${step4Duration.toFixed(2)}ms`);
+      
       isProgrammaticallySettingChat.current = false;
       setViewState('chatReady');
     } catch (err: unknown) {
+      const totalDuration = performance.now() - totalStartTime;
+      console.error(`[ChatPage] ⏱️ handleStartNormalChat ERROR - Total Duration: ${totalDuration.toFixed(2)}ms`, err);
       isProgrammaticallySettingChat.current = false;
       const errorMessage = err instanceof Error ? err.message : 'Failed to start normal chat';
       setError(errorMessage);

@@ -46,15 +46,19 @@ export function useChats(initialQuery: QueryChatsDto = {}): UseChatsReturn {
   }, []);
 
   const createChat = useCallback(async (data: CreateChatDto): Promise<Chat> => {
+    const startTime = performance.now();
     setError(null);
     
     try {
-      console.debug('[useChats] createChat with data:', data);
+      console.log('[useChats] ⏱️ createChat START', { data, timestamp: new Date().toISOString() });
       const newChat = await chatService.createChat(data);
-      console.debug('[useChats] createChat created id:', newChat.id);
+      const duration = performance.now() - startTime;
+      console.log(`[useChats] ⏱️ createChat END - Duration: ${duration.toFixed(2)}ms`, { chatId: newChat.id });
       setChats(prev => [newChat, ...prev]);
       return newChat;
     } catch (err: any) {
+      const duration = performance.now() - startTime;
+      console.error(`[useChats] ⏱️ createChat ERROR - Duration: ${duration.toFixed(2)}ms`, err);
       setError(err.message);
       throw err;
     }
@@ -123,14 +127,23 @@ export function useChatMessages(chatId: string | null): UseChatMessagesReturn {
       return;
     }
 
+    const startTime = performance.now();
     setIsLoading(true);
     setError(null);
     
     try {
+      console.log('[useChatMessages] ⏱️ loadMessages START', { chatId, timestamp: new Date().toISOString() });
       const fetchedMessages = await chatService.getMessages(chatId, { limit: 20 });
+      const duration = performance.now() - startTime;
+      console.log(`[useChatMessages] ⏱️ loadMessages END - Duration: ${duration.toFixed(2)}ms`, { 
+        chatId, 
+        messagesCount: fetchedMessages.length 
+      });
       setMessages(fetchedMessages);
       setHasMore(fetchedMessages.length === 20);
     } catch (err: any) {
+      const duration = performance.now() - startTime;
+      console.error(`[useChatMessages] ⏱️ loadMessages ERROR - Duration: ${duration.toFixed(2)}ms`, { chatId, err });
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -409,11 +422,12 @@ export function useActiveChat() {
   const [error, setError] = useState<string | null>(null);
 
   const setActiveChatById = useCallback(async (chatId: string | null) => {
-    console.debug('[useActiveChat] setActiveChatById called with:', chatId);
+    const startTime = performance.now();
+    console.log('[useActiveChat] ⏱️ setActiveChatById START', { chatId, timestamp: new Date().toISOString() });
     setActiveChatId(chatId);
     
     if (!chatId) {
-      console.debug('[useActiveChat] clearing active chat');
+      console.log('[useActiveChat] ⏱️ setActiveChatById - clearing active chat');
       setActiveChat(null);
       return;
     }
@@ -422,11 +436,16 @@ export function useActiveChat() {
     setError(null);
 
     try {
-      console.debug('[useActiveChat] fetching chat by id:', chatId);
       const chat = await chatService.getChatById(chatId);
-      console.debug('[useActiveChat] fetched chat, messages:', chat.messages?.length ?? 0);
+      const duration = performance.now() - startTime;
+      console.log(`[useActiveChat] ⏱️ setActiveChatById END - Duration: ${duration.toFixed(2)}ms`, { 
+        chatId, 
+        messagesCount: chat.messages?.length ?? 0 
+      });
       setActiveChat(chat);
     } catch (err: any) {
+      const duration = performance.now() - startTime;
+      console.error(`[useActiveChat] ⏱️ setActiveChatById ERROR - Duration: ${duration.toFixed(2)}ms`, { chatId, err });
       setError(err.message);
       setActiveChat(null);
     } finally {

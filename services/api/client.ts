@@ -17,7 +17,7 @@ export const apiClient = axios.create({
   withCredentials: true, // Include credentials in requests
 });
 
-// Request interceptor - Add auth token to requests
+// Request interceptor - Add auth token to requests and track timing
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = Cookies.get(ACCESS_TOKEN_KEY);
@@ -25,6 +25,10 @@ apiClient.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Add performance tracking
+    (config as any).__startTime = performance.now();
+    (config as any).__url = `${config.method?.toUpperCase()} ${config.url}`;
     
     return config;
   },
@@ -36,6 +40,16 @@ apiClient.interceptors.request.use(
 // Response interceptor - Handle token refresh and errors
 apiClient.interceptors.response.use(
   (response) => {
+    // Log performance metrics
+    const config = response.config as InternalAxiosRequestConfig & { __startTime?: number; __url?: string };
+    if (config.__startTime && config.__url) {
+      const duration = performance.now() - config.__startTime;
+      console.log(`[API Client] ⏱️ ${config.__url} - Duration: ${duration.toFixed(2)}ms`, {
+        status: response.status,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     // If response has data wrapper from NestJS TransformInterceptor
     // Extract the actual data
     if (response.data && response.data.data !== undefined) {
@@ -44,6 +58,19 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error: AxiosError<any>) => {
+    // Log performance metrics for errors
+    const config = error.config as (InternalAxiosRequestConfig & { __startTime?: number; __url?: string; _retry?: boolean }) | undefined;
+    if (config && config.__startTime) {
+      const duration = performance.now() - config.__startTime;
+      // Use __url if available, otherwise construct from config
+      const url = config.__url || (config.method ? `${config.method.toUpperCase()} ${config.url || 'unknown'}` : 'unknown');
+      console.error(`[API Client] ⏱️ ${url} - ERROR - Duration: ${duration.toFixed(2)}ms`, {
+        status: error.response?.status,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     // If error is 401 and we haven't retried yet
