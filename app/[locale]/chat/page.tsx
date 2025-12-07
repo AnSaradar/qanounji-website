@@ -265,21 +265,17 @@ function ChatInterface() {
       
       addToHistory(targetChatId);
       
-      // Step 3: Create starter message
+      // Step 3: Create starter message and append to state (no need to reload)
       const step3Start = performance.now();
       let step3Duration = 0;
-      let step4Duration = 0;
       try {
         const starterMessage = t('welcome.normal.starterMessage');
-        await chatService.createStarterMessage(targetChatId, starterMessage);
+        const savedStarter = await chatService.createStarterMessage(targetChatId, starterMessage);
         step3Duration = performance.now() - step3Start;
         console.log(`[ChatPage] ⏱️ Step 3 - createStarterMessage completed: ${step3Duration.toFixed(2)}ms`);
         
-        // Step 4: Load messages
-        const step4Start = performance.now();
-        await loadMessages();
-        step4Duration = performance.now() - step4Start;
-        console.log(`[ChatPage] ⏱️ Step 4 - loadMessages completed: ${step4Duration.toFixed(2)}ms`);
+        // Append message to state instead of reloading (saves ~900ms)
+        appendMessage(savedStarter);
       } catch (err: unknown) {
         step3Duration = performance.now() - step3Start;
         console.error('[ChatPage] Failed to save normal chat starter message:', err);
@@ -288,7 +284,7 @@ function ChatInterface() {
       
       const totalDuration = performance.now() - totalStartTime;
       console.log(`[ChatPage] ⏱️ handleStartNormalChat END - Total Duration: ${totalDuration.toFixed(2)}ms`);
-      console.log(`[ChatPage] ⏱️ Breakdown: createChat=${step1Duration.toFixed(2)}ms, setActiveChat=${step2Duration.toFixed(2)}ms, starterMessage=${step3Duration.toFixed(2)}ms, loadMessages=${step4Duration.toFixed(2)}ms`);
+      console.log(`[ChatPage] ⏱️ Breakdown: createChat=${step1Duration.toFixed(2)}ms, setActiveChat=${step2Duration.toFixed(2)}ms, starterMessage=${step3Duration.toFixed(2)}ms`);
       
       isProgrammaticallySettingChat.current = false;
       setViewState('chatReady');
@@ -300,58 +296,65 @@ function ChatInterface() {
       setError(errorMessage);
       setViewState('idle');
     }
-  }, [createChat, locale, t, setActiveChatById, addToHistory, loadMessages]);
+  }, [createChat, locale, t, setActiveChatById, addToHistory, appendMessage]);
 
   const handleStartCaseAnalysis = useCallback(async () => {
+    const totalStartTime = performance.now();
     try {
-      console.log('[ChatPage] handleStartCaseAnalysis called');
+      console.log('[ChatPage] ⏱️ handleStartCaseAnalysis START', { timestamp: new Date().toISOString() });
       setError(null);
       setViewState('startingAnalysis');
-      // Always create new chat for case analysis
-      console.log('[ChatPage] Creating new chat for case analysis...');
       isProgrammaticallySettingChat.current = true;
+      
       const createData: CreateChatDto = {
         lang: locale as 'ar' | 'en',
         title: t('header.title'),
       };
-      const newChat = await createChat({ ...createData, mode: 'case_analysis' });
-      const targetChatId = newChat.id;
-      await setActiveChatById(targetChatId);
-      addToHistory(targetChatId);
-
-      console.log('[ChatPage] Starting case analysis for chat:', targetChatId);
-
-      const waitForActive = async (retries = 10) => {
-        for (let i = 0; i < retries; i++) {
-          if (activeChatIdRef.current === targetChatId) return true;
-          await new Promise(r => setTimeout(r, 50));
-        }
-        return false;
-      };
-      await waitForActive();
-
-      // Always call the explicit variant to avoid race with hook's chatId closure
-      const assistantMsg = await startCaseAnalysisFor(targetChatId);
-      console.log('[ChatPage] Case analysis started, assistant message:', assistantMsg);
       
-      // Create and save the starter message from frontend
+      // Step 1: Create chat
+      const step1Start = performance.now();
+      const newChat = await createChat({ ...createData, mode: 'case_analysis' });
+      const step1Duration = performance.now() - step1Start;
+      console.log(`[ChatPage] ⏱️ Step 1 - createChat completed: ${step1Duration.toFixed(2)}ms`);
+      
+      const targetChatId = newChat.id;
+      
+      // Step 2: Set active chat and start case analysis in parallel (they don't depend on each other)
+      const step2Start = performance.now();
+      await Promise.all([
+        setActiveChatById(targetChatId),
+        startCaseAnalysisFor(targetChatId),
+      ]);
+      const step2Duration = performance.now() - step2Start;
+      console.log(`[ChatPage] ⏱️ Step 2 - setActiveChatById + startCaseAnalysis completed: ${step2Duration.toFixed(2)}ms`);
+      
+      addToHistory(targetChatId);
+      
+      // Step 3: Create and append starter message (no need to reload)
+      const step3Start = performance.now();
       try {
         const starterMessage = t('welcome.caseAnalysis.starterMessage');
         const savedStarter = await chatService.createStarterMessage(targetChatId, starterMessage);
-        console.log('[ChatPage] Starter message saved:', savedStarter);
-        // Reload messages to show the saved starter message
-        await loadMessages();
+        const step3Duration = performance.now() - step3Start;
+        console.log(`[ChatPage] ⏱️ Step 3 - createStarterMessage completed: ${step3Duration.toFixed(2)}ms`);
+        
+        // Append message to state instead of reloading (saves ~900ms)
+        appendMessage(savedStarter);
       } catch (err: unknown) {
         console.error('[ChatPage] Failed to save starter message:', err);
         // Don't fail the whole flow if starter message save fails
       }
 
-      // Reset the flag after everything is complete
+      const totalDuration = performance.now() - totalStartTime;
+      console.log(`[ChatPage] ⏱️ handleStartCaseAnalysis END - Total Duration: ${totalDuration.toFixed(2)}ms`);
+      console.log(`[ChatPage] ⏱️ Breakdown: createChat=${step1Duration.toFixed(2)}ms, setActiveChat+startCaseAnalysis=${step2Duration.toFixed(2)}ms, starterMessage=${(performance.now() - step3Start).toFixed(2)}ms`);
+
       isProgrammaticallySettingChat.current = false;
       setViewState('chatReady');
     } catch (err: unknown) {
-      isProgrammaticallySettingChat.current = false; // Reset on error
-      console.error('[ChatPage] Failed to start case analysis:', err);
+      const totalDuration = performance.now() - totalStartTime;
+      console.error(`[ChatPage] ⏱️ handleStartCaseAnalysis ERROR - Total Duration: ${totalDuration.toFixed(2)}ms`, err);
+      isProgrammaticallySettingChat.current = false;
       let errorMessage = 'Failed to start case analysis';
       if (err instanceof Error) {
         errorMessage = err.message;
@@ -364,7 +367,7 @@ function ChatInterface() {
       setError(errorMessage);
       setViewState('idle');
     }
-  }, [startCaseAnalysisFor, loadMessages, setActiveChatById, addToHistory, createChat, locale, t]);
+  }, [startCaseAnalysisFor, setActiveChatById, addToHistory, createChat, locale, t, appendMessage]);
 
   // Clear error on user action
   const clearError = useCallback(() => {
