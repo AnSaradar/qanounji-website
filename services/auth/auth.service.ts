@@ -115,22 +115,32 @@ class AuthService {
   /**
    * Handle API errors and extract meaningful messages
    */
-  private handleError(error: any): Error & { statusCode?: number } {
+  private handleError(error: any): Error & { statusCode?: number; response?: any } {
+    console.log('[AuthService] handleError called with:', {
+      responseStatus: error.response?.status,
+      responseData: error.response?.data,
+      message: error.message
+    });
+
     if (error.response) {
       // Backend returned an error response
       const statusCode = error.response.status;
       const message = error.response.data?.message || error.response.data?.error || 'An error occurred';
-      const err = new Error(message) as Error & { statusCode?: number };
+      const err = new Error(message) as Error & { statusCode?: number; response?: any };
       err.statusCode = statusCode;
+      // Also preserve the original response for additional context
+      err.response = error.response;
+      
+      console.log('[AuthService] Created error with statusCode:', statusCode, 'message:', message);
       return err;
     } else if (error.request) {
       // Request was made but no response received
-      const err = new Error('Network error. Please check your connection.') as Error & { statusCode?: number };
+      const err = new Error('Network error. Please check your connection.') as Error & { statusCode?: number; response?: any };
       err.statusCode = undefined;
       return err;
     } else {
       // Something else happened
-      const err = new Error(error.message || 'An unexpected error occurred') as Error & { statusCode?: number };
+      const err = new Error(error.message || 'An unexpected error occurred') as Error & { statusCode?: number; response?: any };
       err.statusCode = undefined;
       return err;
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -32,6 +32,24 @@ export function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-dismiss error after 5 seconds
+  useEffect(() => {
+    if (errorMessage) {
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
+      }
+      errorTimeoutRef.current = setTimeout(() => {
+        setErrorMessage('');
+      }, 5000);
+    }
+    return () => {
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
+      }
+    };
+  }, [errorMessage]);
 
   // Validation schema
   const registerSchema = z
@@ -88,14 +106,45 @@ export function RegisterForm() {
       await registerUser(registerData);
       // Redirect happens automatically in auth provider
     } catch (error: any) {
-      const statusCode = error?.statusCode || error?.response?.status;
+      // Extract status code from multiple possible locations
+      const statusCode = error?.statusCode || 
+                        error?.response?.status || 
+                        error?.response?.data?.statusCode;
+      const backendMessage = (error?.message || 
+                             error?.response?.data?.message || 
+                             '').toLowerCase();
+      
+      console.log('[RegisterForm] Error details:', { statusCode, backendMessage, error });
+      
+      let message: string;
+      
+      // Map specific backend error messages to translation keys
       if (statusCode === 409) {
-        setErrorMessage(tErrors('accountExists'));
+        // Conflict - account already exists
+        if (backendMessage.includes('email')) {
+          message = tErrors('emailExists');
+        } else if (backendMessage.includes('phone')) {
+          message = tErrors('phoneExists');
+        } else {
+          message = tErrors('accountExists');
+        }
       } else if (statusCode === 400) {
-        setErrorMessage(tErrors('invalidData'));
+        if (backendMessage.includes('email') && backendMessage.includes('phone')) {
+          message = tErrors('missingIdentifier');
+        } else {
+          message = tErrors('invalidData');
+        }
+      } else if (statusCode >= 500) {
+        message = tErrors('serverError');
+      } else if (!navigator.onLine || error?.code === 'NETWORK_ERROR') {
+        message = tErrors('networkError');
       } else {
-        setErrorMessage(tErrors('registerFailed'));
+        message = tErrors('registerFailed');
       }
+      
+      console.log('[RegisterForm] Showing error message:', message);
+      
+      setErrorMessage(message);
     } finally {
       setIsLoading(false);
     }
@@ -116,10 +165,24 @@ export function RegisterForm() {
         <CardContent className="space-y-4 pb-4 px-4 sm:px-6">
           {/* Error Message */}
           {errorMessage && (
-            <div className="p-2 sm:p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <p className="text-xs text-red-800 dark:text-red-200">
-                {errorMessage}
-              </p>
+            <div className="relative overflow-hidden rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-start justify-between gap-2 p-2 sm:p-3">
+                <p className="text-xs text-red-800 dark:text-red-200 flex-1">
+                  {errorMessage}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setErrorMessage('')}
+                  className="text-red-700 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100 text-lg font-bold leading-none flex-shrink-0"
+                >
+                  ×
+                </button>
+              </div>
+              {/* Progress bar showing time remaining */}
+              <div 
+                className="absolute bottom-0 left-0 h-0.5 bg-red-500 dark:bg-red-400 animate-shrink-width"
+                style={{ animationDuration: '5s' }}
+              />
             </div>
           )}
 
@@ -132,8 +195,8 @@ export function RegisterForm() {
               placeholder={t('displayNamePlaceholder')}
               {...register('displayName')}
               disabled={isLoading}
-              className={`${errors.displayName ? 'border-red-500' : ''} h-10 text-sm`}
-              dir="ltr"
+              className={`${errors.displayName ? 'border-red-500' : ''} h-10 text-sm [&::placeholder]:text-start`}
+              dir={localeParam === 'ar' ? 'rtl' : 'ltr'}
             />
             {errors.displayName && (
               <p className="text-xs text-red-600 dark:text-red-400">
@@ -151,8 +214,8 @@ export function RegisterForm() {
               placeholder={t('emailPlaceholder')}
               {...register('email')}
               disabled={isLoading}
-              className={`${errors.email ? 'border-red-500' : ''} h-10 text-sm`}
-              dir="ltr"
+              className={`${errors.email ? 'border-red-500' : ''} h-10 text-sm [&::placeholder]:text-start`}
+              dir={localeParam === 'ar' ? 'rtl' : 'ltr'}
             />
             {errors.email && (
               <p className="text-xs text-red-600 dark:text-red-400">
@@ -170,8 +233,8 @@ export function RegisterForm() {
               placeholder={t('phonePlaceholder')}
               {...register('phone')}
               disabled={isLoading}
-              className={`${errors.phone ? 'border-red-500' : ''} h-10 text-sm`}
-              dir="ltr"
+              className={`${errors.phone ? 'border-red-500' : ''} h-10 text-sm [&::placeholder]:text-start`}
+              dir={localeParam === 'ar' ? 'rtl' : 'ltr'}
             />
             {errors.phone && (
               <p className="text-xs text-red-600 dark:text-red-400">
@@ -193,13 +256,13 @@ export function RegisterForm() {
                 placeholder={t('passwordPlaceholder')}
                 {...register('password')}
                 disabled={isLoading}
-                className={`${errors.password ? 'border-red-500' : ''} pr-10 h-10 text-sm`}
-                dir="ltr"
+                className={`${errors.password ? 'border-red-500' : ''} ${localeParam === 'ar' ? 'pl-10 pr-3' : 'pr-10'} h-10 text-sm [&::placeholder]:text-start`}
+                dir={localeParam === 'ar' ? 'rtl' : 'ltr'}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className={`absolute top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ${localeParam === 'ar' ? 'left-3' : 'right-3'}`}
                 disabled={isLoading}
               >
                 {showPassword ? (
@@ -226,13 +289,13 @@ export function RegisterForm() {
                 placeholder={t('confirmPasswordPlaceholder')}
                 {...register('confirmPassword')}
                 disabled={isLoading}
-                className={`${errors.confirmPassword ? 'border-red-500' : ''} pr-10 h-10 text-sm`}
-                dir="ltr"
+                className={`${errors.confirmPassword ? 'border-red-500' : ''} ${localeParam === 'ar' ? 'pl-10 pr-3' : 'pr-10'} h-10 text-sm [&::placeholder]:text-start`}
+                dir={localeParam === 'ar' ? 'rtl' : 'ltr'}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className={`absolute top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ${localeParam === 'ar' ? 'left-3' : 'right-3'}`}
                 disabled={isLoading}
               >
                 {showConfirmPassword ? (

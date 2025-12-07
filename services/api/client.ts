@@ -17,6 +17,13 @@ export const apiClient = axios.create({
   withCredentials: true, // Include credentials in requests
 });
 
+// Helper function to check if endpoint should be tracked
+const shouldTrackPerformance = (url: string | undefined): boolean => {
+  if (!url) return false;
+  // Only track chat-related endpoints
+  return url.includes('/chats');
+};
+
 // Request interceptor - Add auth token to requests and track timing
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -26,9 +33,12 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Add performance tracking
-    (config as any).__startTime = performance.now();
-    (config as any).__url = `${config.method?.toUpperCase()} ${config.url}`;
+    // Add performance tracking only for chat endpoints
+    if (shouldTrackPerformance(config.url)) {
+      (config as any).__startTime = performance.now();
+      (config as any).__url = `${config.method?.toUpperCase()} ${config.url}`;
+      (config as any).__shouldTrack = true;
+    }
     
     return config;
   },
@@ -40,14 +50,20 @@ apiClient.interceptors.request.use(
 // Response interceptor - Handle token refresh and errors
 apiClient.interceptors.response.use(
   (response) => {
-    // Log performance metrics
-    const config = response.config as InternalAxiosRequestConfig & { __startTime?: number; __url?: string };
-    if (config.__startTime && config.__url) {
+    // Log performance metrics only for chat endpoints
+    const config = response.config as InternalAxiosRequestConfig & { 
+      __startTime?: number; 
+      __url?: string; 
+      __shouldTrack?: boolean;
+    };
+    if (config.__shouldTrack && config.__startTime && config.__url) {
       const duration = performance.now() - config.__startTime;
-      console.log(`[API Client] ⏱️ ${config.__url} - Duration: ${duration.toFixed(2)}ms`, {
-        status: response.status,
-        timestamp: new Date().toISOString()
-      });
+      if (!isNaN(duration)) {
+        console.log(`[API Client] ⏱️ ${config.__url} - Duration: ${duration.toFixed(2)}ms`, {
+          status: response.status,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
     
     // If response has data wrapper from NestJS TransformInterceptor
@@ -58,23 +74,41 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error: AxiosError<any>) => {
-    // Log performance metrics for errors
-    const config = error.config as (InternalAxiosRequestConfig & { __startTime?: number; __url?: string; _retry?: boolean }) | undefined;
-    if (config && config.__startTime) {
-      const duration = performance.now() - config.__startTime;
-      // Use __url if available, otherwise construct from config
-      const url = config.__url || (config.method ? `${config.method.toUpperCase()} ${config.url || 'unknown'}` : 'unknown');
-      console.error(`[API Client] ⏱️ ${url} - ERROR - Duration: ${duration.toFixed(2)}ms`, {
-        status: error.response?.status,
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
+    // Log performance metrics for errors only for chat endpoints
+    const config = error.config as (InternalAxiosRequestConfig & { 
+      __startTime?: number; 
+      __url?: string; 
+      _retry?: boolean;
+      __shouldTrack?: boolean;
+    }) | undefined;
+    
+    if (config?.__shouldTrack && config.__startTime) {
+      try {
+        const duration = performance.now() - config.__startTime;
+        if (!isNaN(duration)) {
+          const url = config.__url || (config.method ? `${config.method.toUpperCase()} ${config.url || 'unknown'}` : 'unknown');
+          const durationStr = duration.toFixed(2);
+          console.error(`[API Client] ⏱️ ${url} - ERROR - Duration: ${durationStr}ms`, {
+            status: error.response?.status || 'N/A',
+            error: error.message || 'Unknown error',
+            timestamp: new Date().toISOString()
+          });
+        }
+      } catch (logError) {
+        // Silently fail logging to prevent breaking the error flow
+        // Only log if it's a chat endpoint to avoid noise
+      }
     }
     
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // If error is 401 and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Skip token refresh for auth endpoints (login, register, refresh)
+    const isAuthEndpoint = originalRequest?.url?.includes('/auth/login') || 
+                           originalRequest?.url?.includes('/auth/register') ||
+                           originalRequest?.url?.includes('/auth/refresh');
+
+    // If error is 401 and we haven't retried yet AND it's not an auth endpoint
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
@@ -117,7 +151,7 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Handle other errors
+    // Handle other errors - preserve status code for proper error handling
     return Promise.reject(error);
   }
 );

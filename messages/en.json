@@ -110,13 +110,19 @@
       "weakPassword": "Password is too weak. Please choose a stronger password"
     },
     "errors": {
-      "loginFailed": "Unable to sign in. Please verify your credentials and try again",
-      "invalidCredentials": "The email or password you entered is incorrect. Please try again",
+      "loginFailed": "Unable to sign in. Please try again later",
+      "invalidCredentials": "Email or password is incorrect",
+      "accountDeactivated": "This account has been deactivated. Please contact support",
       "registerFailed": "Unable to create your account. Please try again later",
-      "accountExists": "An account with this email or phone number already exists. Please sign in instead",
+      "emailExists": "This email is already registered. Please use a different email or sign in",
+      "phoneExists": "This phone number is already registered. Please use a different number or sign in",
+      "accountExists": "An account with these details already exists. Please sign in instead",
       "invalidData": "The information you entered is invalid. Please check your details and try again",
+      "missingIdentifier": "Please enter either email or phone number",
       "unauthorized": "Sorry, you do not have permission to access this page",
-      "networkError": "A connection error occurred. Please check your internet connection and try again"
+      "sessionExpired": "Your session has expired. Please sign in again",
+      "networkError": "A connection error occurred. Please check your internet connection",
+      "serverError": "A server error occurred. Please try again later"
     }
   },
   "chat": {

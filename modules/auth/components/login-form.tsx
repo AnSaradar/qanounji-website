@@ -63,17 +63,42 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
       await login(data);
       // Redirect happens automatically in auth provider
     } catch (error: any) {
-      const statusCode = error?.statusCode || error?.response?.status;
+      // Extract status code from multiple possible locations
+      const statusCode = error?.statusCode || 
+                        error?.response?.status || 
+                        error?.response?.data?.statusCode;
+      const backendMessage = (error?.message || 
+                             error?.response?.data?.message || 
+                             '').toLowerCase();
+      
+      console.log('[LoginForm] Error details:', { statusCode, backendMessage, error });
+      
       let message: string;
-      if (statusCode === 401 || statusCode === 400) {
-        message = tErrors('invalidCredentials');
+      
+      // Map specific backend error messages to translation keys
+      if (statusCode === 401) {
+        if (backendMessage.includes('deactivated')) {
+          message = tErrors('accountDeactivated');
+        } else if (backendMessage.includes('expired') || backendMessage.includes('session')) {
+          message = tErrors('sessionExpired');
+        } else {
+          // Default 401: invalid credentials
+          message = tErrors('invalidCredentials');
+        }
       } else if (statusCode === 403) {
         message = tErrors('unauthorized');
+      } else if (statusCode === 400) {
+        message = tErrors('invalidData');
+      } else if (statusCode >= 500) {
+        message = tErrors('serverError');
       } else if (!navigator.onLine || error?.code === 'NETWORK_ERROR') {
         message = tErrors('networkError');
       } else {
         message = tErrors('loginFailed');
       }
+      
+      console.log('[LoginForm] Showing error message:', message);
+      
       if (onError) {
         onError(message);
       } else {
@@ -108,8 +133,8 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
               placeholder={t('identifierPlaceholder')}
               {...register('identifier')}
               disabled={isLoading}
-              className={`${errors.identifier ? 'border-red-500' : ''} h-10 text-sm`}
-              dir="ltr"
+              className={`${errors.identifier ? 'border-red-500' : ''} h-10 text-sm [&::placeholder]:text-start`}
+              dir={locale === 'ar' ? 'rtl' : 'ltr'}
             />
             {errors.identifier && (
               <p className="text-xs text-red-600 dark:text-red-400">
@@ -128,13 +153,13 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
                 placeholder={t('passwordPlaceholder')}
                 {...register('password')}
                 disabled={isLoading}
-                className={`${errors.password ? 'border-red-500' : ''} pr-10 h-10 text-sm`}
-                dir="ltr"
+                className={`${errors.password ? 'border-red-500' : ''} ${locale === 'ar' ? 'pl-10 pr-3' : 'pr-10'} h-10 text-sm [&::placeholder]:text-start`}
+                dir={locale === 'ar' ? 'rtl' : 'ltr'}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className={`absolute top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ${locale === 'ar' ? 'left-3' : 'right-3'}`}
                 disabled={isLoading}
               >
                 {showPassword ? (

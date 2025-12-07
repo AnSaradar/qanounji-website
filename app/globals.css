@@ -148,6 +148,20 @@
   animation-delay: 1s;
 }
 
+/* Error Banner Progress Bar Animation */
+@keyframes shrink-width {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.animate-shrink-width {
+  animation: shrink-width linear forwards;
+}
+
 /* Background Grid Pattern */
 .bg-grid-pattern {
   background-image: 
