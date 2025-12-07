@@ -85,22 +85,22 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-xl">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl sm:text-3xl font-bold text-center">
+    <Card className="w-full max-w-md shadow-xl mx-auto my-2 sm:my-4 md:my-8">
+      <CardHeader className="space-y-1 px-4 sm:px-6 pt-4 sm:pt-5 pb-4">
+        <CardTitle className="text-xl sm:text-2xl font-bold text-center">
           {t('title')}
         </CardTitle>
-        <CardDescription className="text-center text-base">
+        <CardDescription className="text-center text-xs sm:text-sm">
           {t('subtitle')}
         </CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pb-4 px-4 sm:px-6">
           {/* Field errors are shown below each input. Submit error is handled by parent banner if provided. */}
 
           {/* Identifier Field */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="identifier">{t('identifier')}</Label>
             <Input
               id="identifier"
@@ -108,18 +108,18 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
               placeholder={t('identifierPlaceholder')}
               {...register('identifier')}
               disabled={isLoading}
-              className={errors.identifier ? 'border-red-500' : ''}
+              className={`${errors.identifier ? 'border-red-500' : ''} h-10 text-sm`}
               dir="ltr"
             />
             {errors.identifier && (
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-xs text-red-600 dark:text-red-400">
                 {errors.identifier.message}
               </p>
             )}
           </div>
 
           {/* Password Field */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="password">{t('password')}</Label>
             <div className="relative">
               <Input
@@ -128,7 +128,7 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
                 placeholder={t('passwordPlaceholder')}
                 {...register('password')}
                 disabled={isLoading}
-                className={`${errors.password ? 'border-red-500' : ''} pr-10`}
+                className={`${errors.password ? 'border-red-500' : ''} pr-10 h-10 text-sm`}
                 dir="ltr"
               />
               <button
@@ -145,7 +145,7 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
               </button>
             </div>
             {errors.password && (
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-xs text-red-600 dark:text-red-400">
                 {errors.password.message}
               </p>
             )}
@@ -155,19 +155,19 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
           <div className={`flex justify-end ${locale === 'ar' ? 'text-right' : ''}`}>
             <Link
               href={`/${locale}/auth/forgot-password`}
-              className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
             >
               {t('forgotPassword')}
             </Link>
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col space-y-4">
+        <CardFooter className="flex flex-col space-y-3 pt-2 mt-2 px-4 sm:px-6 pb-6">
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full mt-4"
-            size="lg"
+            className="w-full"
+            size="default"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -181,7 +181,7 @@ export function LoginForm({ onError, onRequestStart }: LoginFormProps) {
           </Button>
 
           {/* Register Link */}
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-center text-xs text-gray-600 dark:text-gray-400">
             {t('noAccount')}{' '}
             <Link
               href={`/${locale}/auth/register`}

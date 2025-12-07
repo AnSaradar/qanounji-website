@@ -102,29 +102,29 @@ export function RegisterForm() {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-xl">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl sm:text-3xl font-bold text-center">
+    <Card className="w-full max-w-md shadow-xl mx-auto my-2 sm:my-4 md:my-8">
+      <CardHeader className="space-y-1 px-4 sm:px-6 pt-4 sm:pt-5 pb-4">
+        <CardTitle className="text-xl sm:text-2xl font-bold text-center">
           {t('title')}
         </CardTitle>
-        <CardDescription className="text-center text-base">
+        <CardDescription className="text-center text-xs sm:text-sm">
           {t('subtitle')}
         </CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pb-4 px-4 sm:px-6">
           {/* Error Message */}
           {errorMessage && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <p className="text-sm text-red-800 dark:text-red-200">
+            <div className="p-2 sm:p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <p className="text-xs text-red-800 dark:text-red-200">
                 {errorMessage}
               </p>
             </div>
           )}
 
           {/* Display Name Field */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="displayName">{t('displayName')}</Label>
             <Input
               id="displayName"
@@ -132,18 +132,18 @@ export function RegisterForm() {
               placeholder={t('displayNamePlaceholder')}
               {...register('displayName')}
               disabled={isLoading}
-              className={errors.displayName ? 'border-red-500' : ''}
+              className={`${errors.displayName ? 'border-red-500' : ''} h-10 text-sm`}
               dir="ltr"
             />
             {errors.displayName && (
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-xs text-red-600 dark:text-red-400">
                 {errors.displayName.message}
               </p>
             )}
           </div>
 
           {/* Email Field */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="email">{t('email')}</Label>
             <Input
               id="email"
@@ -151,18 +151,18 @@ export function RegisterForm() {
               placeholder={t('emailPlaceholder')}
               {...register('email')}
               disabled={isLoading}
-              className={errors.email ? 'border-red-500' : ''}
+              className={`${errors.email ? 'border-red-500' : ''} h-10 text-sm`}
               dir="ltr"
             />
             {errors.email && (
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-xs text-red-600 dark:text-red-400">
                 {errors.email.message}
               </p>
             )}
           </div>
 
           {/* Phone Field */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="phone">{t('phone')}</Label>
             <Input
               id="phone"
@@ -170,11 +170,11 @@ export function RegisterForm() {
               placeholder={t('phonePlaceholder')}
               {...register('phone')}
               disabled={isLoading}
-              className={errors.phone ? 'border-red-500' : ''}
+              className={`${errors.phone ? 'border-red-500' : ''} h-10 text-sm`}
               dir="ltr"
             />
             {errors.phone && (
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-xs text-red-600 dark:text-red-400">
                 {errors.phone.message}
               </p>
             )}
@@ -184,7 +184,7 @@ export function RegisterForm() {
           </div>
 
           {/* Password Field */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="password">{t('password')}</Label>
             <div className="relative">
               <Input
@@ -193,7 +193,7 @@ export function RegisterForm() {
                 placeholder={t('passwordPlaceholder')}
                 {...register('password')}
                 disabled={isLoading}
-                className={`${errors.password ? 'border-red-500' : ''} pr-10`}
+                className={`${errors.password ? 'border-red-500' : ''} pr-10 h-10 text-sm`}
                 dir="ltr"
               />
               <button
@@ -210,14 +210,14 @@ export function RegisterForm() {
               </button>
             </div>
             {errors.password && (
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-xs text-red-600 dark:text-red-400">
                 {errors.password.message}
               </p>
             )}
           </div>
 
           {/* Confirm Password Field */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
             <div className="relative">
               <Input
@@ -226,7 +226,7 @@ export function RegisterForm() {
                 placeholder={t('confirmPasswordPlaceholder')}
                 {...register('confirmPassword')}
                 disabled={isLoading}
-                className={`${errors.confirmPassword ? 'border-red-500' : ''} pr-10`}
+                className={`${errors.confirmPassword ? 'border-red-500' : ''} pr-10 h-10 text-sm`}
                 dir="ltr"
               />
               <button
@@ -243,19 +243,19 @@ export function RegisterForm() {
               </button>
             </div>
             {errors.confirmPassword && (
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-xs text-red-600 dark:text-red-400">
                 {errors.confirmPassword.message}
               </p>
             )}
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col space-y-4">
+        <CardFooter className="flex flex-col space-y-3 pt-2 mt-2 px-4 sm:px-6 pb-6">
           {/* Submit Button */}
           <Button
             type="submit"
             className="w-full"
-            size="lg"
+            size="default"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -269,7 +269,7 @@ export function RegisterForm() {
           </Button>
 
           {/* Login Link */}
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-center text-xs text-gray-600 dark:text-gray-400">
             {t('haveAccount')}{' '}
             <Link
               href={`/${localeParam}/auth/login`}

@@ -12,6 +12,16 @@ export function HeroSection() {
   const params = useParams();
   const locale = params.locale as string;
 
+  const handleLearnMoreClick = () => {
+    const featuresSection = document.getElementById('features');
+    if (featuresSection) {
+      featuresSection.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  };
+
   return (
     <section className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900">
       {/* Background Pattern */}
@@ -73,22 +83,21 @@ export function HeroSection() {
             <Link href={`/${locale}/auth/register`}>
               <Button
                 size="lg"
-                className="w-full sm:w-auto px-8 py-6 text-lg font-semibold bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 shadow-lg hover:shadow-xl transition-all"
+                className="w-full sm:w-auto sm:min-w-[180px] px-8 py-6 text-lg font-semibold bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
               >
                 {t('getStarted')}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             
-            <Link href={`/${locale}/auth/login`}>
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full sm:w-auto px-8 py-6 text-lg font-semibold border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
-              >
-                {t('learnMore')}
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={handleLearnMoreClick}
+              className="w-full sm:w-auto sm:min-w-[180px] px-8 py-6 text-lg font-semibold border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all flex items-center justify-center"
+            >
+              {t('learnMore')}
+            </Button>
           </motion.div>
 
           {/* Trust Indicators */}
